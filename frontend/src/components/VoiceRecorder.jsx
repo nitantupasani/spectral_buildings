@@ -60,20 +60,15 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     setError('');
 
     try {
-      // Using Web Speech API for transcription (browser-based)
-      // Note: This requires browser support. For production, consider using Whisper via backend
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'voice-note.webm');
 
-      // For this simple demo, we'll set a placeholder
-      // In production, you'd send the audio to your backend for Whisper processing
-      setTranscription('Transcription will be processed when audio is uploaded...');
-      setIsTranscribing(false);
+      const response = await notesAPI.transcribeVoice(formData);
+      setTranscription(response.data.transcription || '');
     } catch (err) {
       console.error('Transcription error:', err);
-      setTranscription('Transcription will be processed on upload');
+      setError(err.response?.data?.message || 'Failed to transcribe audio. Please try again.');
+    } finally {
       setIsTranscribing(false);
     }
   };

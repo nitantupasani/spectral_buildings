@@ -35,6 +35,7 @@ app.get('/', (req, res) => {
         getByBuilding: 'GET /api/notes/building/:buildingId',
         createText: 'POST /api/notes/text',
         createLink: 'POST /api/notes/link',
+        transcribeVoice: 'POST /api/notes/voice/transcribe',
         createVoice: 'POST /api/notes/voice',
         createImage: 'POST /api/notes/image',
         delete: 'DELETE /api/notes/:id'
