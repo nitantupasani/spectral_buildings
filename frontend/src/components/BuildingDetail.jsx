@@ -72,49 +72,15 @@ const BuildingDetail = () => {
 
   const renderNoteContent = (note) => {
     const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    const apiBase = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-    const apiOrigin = (() => {
-      try {
-        return new URL(`${apiBase}/`).origin;
-      } catch (e) {
-        return apiBase;
-      }
-    })();
 
     const resolveFileUrl = (fileUrl) => {
       if (!fileUrl) return '';
-      // Always parse with a base to normalize and capture pathname/search
-      try {
-        const parsed = new URL(fileUrl, `${apiBase}/`);
-        const isLocalHost =
-          parsed.hostname === 'localhost' ||
-          parsed.hostname === '127.0.0.1' ||
-          parsed.hostname === '0.0.0.0';
-
-        // If the stored URL was localhost/127, swap host to the deployed API base
-        if (isLocalHost) {
-          return `${apiOrigin}${parsed.pathname}${parsed.search || ''}`;
-        }
-
-        // If the URL is absolute but uses http on the same host, upgrade to the API host (likely https)
-        const apiHost = new URL(`${apiOrigin}/`).hostname;
-        if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname === apiHost) {
-          const scheme = new URL(`${apiOrigin}/`).protocol || 'https:';
-          return `${scheme}//${apiHost}${parsed.pathname}${parsed.search || ''}`;
-        }
-
-        // If the URL is already absolute to a non-local host, keep it
-        if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
-          return parsed.toString();
-        }
-
-        // Otherwise, treat it as relative and prefix with API base
-        return `${apiOrigin}${parsed.pathname}${parsed.search || ''}`;
-      } catch (e) {
-        // If parsing fails, fall back to a simple prefix
-        const normalized = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
-        return `${apiOrigin}${normalized}`;
+      // If the stored URL is already absolute (e.g., older data with localhost),
+      // use it as-is; otherwise prefix with the API host.
+      if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+        return fileUrl;
       }
+      return `${apiUrl}${fileUrl}`;
     };
     
     switch (note.type) {
