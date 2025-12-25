@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const os = require('os');
+const { FormData, File } = require('undici');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { openaiApiKey } = require('../config/env');
