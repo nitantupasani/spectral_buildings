@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const os = require('os');
+const { FormData, File } = require('undici');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { openaiApiKey } = require('../config/env');
@@ -59,14 +60,24 @@ const memoryUpload = multer({
 });
 
 const getRequestHelpers = async () => {
-  const FormDataCtor = globalThis.FormData;
-  const FileCtor = globalThis.File;
-  const fetchFn = globalThis.fetch;
+  let FormDataCtor = globalThis.FormData;
+  let FileCtor = globalThis.File;
+  let fetchFn = globalThis.fetch;
 
   if (!FormDataCtor || !FileCtor || !fetchFn) {
-    const error = new Error('Transcription requires fetch, FormData, and File globals (Node 18+).');
-    error.statusCode = 503;
-    throw error;
+    try {
+      // Use built-in undici from Node (no external package needed)
+      // eslint-disable-next-line node/no-unsupported-features/node-builtins
+      const undici = require('node:undici');
+      FormDataCtor = FormDataCtor || undici.FormData;
+      FileCtor = FileCtor || undici.File;
+      fetchFn = fetchFn || undici.fetch;
+    } catch (err) {
+      const error = new Error('Transcription requires fetch, FormData, and File (Node 18+ or node:undici globals)');
+      error.cause = err;
+      error.statusCode = 503;
+      throw error;
+    }
   }
 
   return { FormData: FormDataCtor, File: FileCtor, fetch: fetchFn };
