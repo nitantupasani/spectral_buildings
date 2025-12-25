@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
+const os = require('os');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { pipeline } = require('@xenova/transformers');
@@ -115,10 +116,21 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
       return res.status(400).json({ message: 'No audio file uploaded' });
     }
 
-    const transcriber = await getTranscriber();
-    const result = await transcriber(req.file.buffer);
-    const transcription = result?.text?.trim() || '';
-    return res.json({ transcription });
+    const tempPath = path.join(
+      os.tmpdir(),
+      `transcription-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname) || '.webm'}`
+    );
+
+    await fs.promises.writeFile(tempPath, req.file.buffer);
+
+    try {
+      const transcriber = await getTranscriber();
+      const result = await transcriber(tempPath);
+      const transcription = result?.text?.trim() || '';
+      return res.json({ transcription });
+    } finally {
+      fs.promises.unlink(tempPath).catch(() => {});
+    }
   } catch (error) {
     console.error('Transcription error:', error);
     res.status(500).json({ message: 'Failed to transcribe audio' });

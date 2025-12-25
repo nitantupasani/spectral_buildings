@@ -64,16 +64,13 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
 
     try {
       const formData = new FormData();
-      formData.append('audio', blob, 'voice-note.webm');
+      formData.append('audio', audioBlob, 'voice-note.webm');
 
       const response = await notesAPI.transcribeVoice(formData);
-      const transcript = response.data.transcription?.trim() || '';
-      setTranscription(transcript);
-      return transcript;
+      setTranscription(response.data.transcription || '');
     } catch (err) {
       console.error('Transcription error:', err);
-      setError(err.response?.data?.message || 'Failed to transcribe audio. Uploading without transcription.');
-      return '';
+      setError(err.response?.data?.message || 'Failed to transcribe audio. Please try again.');
     } finally {
       setIsTranscribing(false);
     }
