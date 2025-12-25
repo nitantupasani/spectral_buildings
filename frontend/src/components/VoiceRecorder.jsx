@@ -10,8 +10,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [autoProcessing, setAutoProcessing] = useState(false);
-  const [additionalInfo, setAdditionalInfo] = useState('');
-  const additionalInfoRef = useRef('');
   const [autoTriggered, setAutoTriggered] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -23,6 +21,10 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
       }
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    additionalInfoRef.current = additionalInfo;
+  }, [additionalInfo]);
 
   const convertToWav = async (blob) => {
     const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
@@ -101,21 +103,12 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
         audioChunksRef.current.push(event.data);
       };
 
-      mediaRecorderRef.current.onstop = async () => {
-        try {
-          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const wavBlob = await convertToWav(blob);
-          setAudioBlob(wavBlob);
-          setAudioUrl(URL.createObjectURL(wavBlob));
-        } catch (conversionError) {
-          console.error('Audio conversion error:', conversionError);
-          setError('Unable to process the recording. Please try again.');
-          setAudioBlob(null);
-          setAudioUrl(null);
-        } finally {
-          stream.getTracks().forEach(track => track.stop());
-          setAutoTriggered(false);
-        }
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach(track => track.stop());
+        setAutoTriggered(false);
       };
 
       mediaRecorderRef.current.start();
@@ -142,16 +135,13 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
 
     try {
       const formData = new FormData();
-      formData.append('audio', blob, 'voice-note.wav');
+      formData.append('audio', audioBlob, 'voice-note.webm');
 
       const response = await notesAPI.transcribeVoice(formData);
-      const transcript = response.data.transcription?.trim() || '';
-      setTranscription(transcript);
-      return transcript;
+      setTranscription(response.data.transcription || '');
     } catch (err) {
       console.error('Transcription error:', err);
-      setError(err.response?.data?.message || 'Failed to transcribe audio. Uploading without transcription.');
-      return '';
+      setError(err.response?.data?.message || 'Failed to transcribe audio. Please try again.');
     } finally {
       setIsTranscribing(false);
     }
@@ -164,9 +154,8 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     try {
       const formData = new FormData();
       formData.append('buildingId', buildingId);
-      formData.append('audio', blob, 'voice-note.wav');
+      formData.append('audio', blob, 'voice-note.webm');
       formData.append('transcription', transcript);
-      formData.append('content', additionalInfoRef.current || 'Voice note');
 
       const response = await notesAPI.createVoice(formData);
       onVoiceNoteAdded(response.data);
@@ -200,7 +189,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     setAudioBlob(null);
     setAudioUrl(null);
     setTranscription('');
-    setAdditionalInfo('');
     setAutoProcessing(false);
     setAutoTriggered(false);
     audioChunksRef.current = [];
@@ -263,22 +251,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
                   value={transcription}
                   readOnly
                   placeholder="Transcription will appear automatically after recording stops"
-                />
-              </div>
-
-              <div className="form-group" style={{ marginTop: '10px', textAlign: 'left' }}>
-                <label>Attachments / Links / Additional Info</label>
-                <textarea
-                  className="form-control"
-                  rows="3"
-                  placeholder="Add links, attachment details, or context to include with the voice note"
-                  value={additionalInfo}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setAdditionalInfo(value);
-                    additionalInfoRef.current = value;
-                  }}
-                  disabled={loading}
                 />
               </div>
               {(isTranscribing || loading || autoProcessing) && (
