@@ -6,7 +6,6 @@ const { body, validationResult } = require('express-validator');
 const os = require('os');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
-const { pipeline } = require('@xenova/transformers');
 const { WaveFile } = require('wavefile');
 
 const router = express.Router();
@@ -62,6 +61,7 @@ const memoryUpload = multer({
 let transcriberPromise = null;
 const getTranscriber = async () => {
   if (!transcriberPromise) {
+    const { pipeline } = await import('@xenova/transformers');
     transcriberPromise = pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
   }
   return transcriberPromise;
