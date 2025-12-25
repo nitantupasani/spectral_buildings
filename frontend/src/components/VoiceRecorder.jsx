@@ -22,10 +22,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     };
   }, [audioUrl]);
 
-  useEffect(() => {
-    additionalInfoRef.current = additionalInfo;
-  }, [additionalInfo]);
-
   const convertToWav = async (blob) => {
     const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OfflineCtx) {
@@ -134,17 +130,55 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'voice-note.webm');
-
-      const response = await notesAPI.transcribeVoice(formData);
-      setTranscription(response.data.transcription || '');
+      // Use browser's Web Speech API (free, no server needed)
+      return await transcribeWithWebSpeechAPI(blob);
     } catch (err) {
       console.error('Transcription error:', err);
-      setError(err.response?.data?.message || 'Failed to transcribe audio. Please try again.');
+      setError(err.message || 'Failed to transcribe audio. Please try again.');
+      return '';
     } finally {
       setIsTranscribing(false);
     }
+  };
+
+  const transcribeWithWebSpeechAPI = (blob) => {
+    return new Promise((resolve, reject) => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        reject(new Error('Speech recognition not supported in this browser'));
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      // Create an audio element to play the recorded blob
+      const audio = new Audio(URL.createObjectURL(blob));
+      
+      recognition.onstart = () => {
+        audio.play();
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setTranscription(transcript);
+        resolve(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        reject(new Error(`Speech recognition error: ${event.error}`));
+      };
+
+      recognition.onend = () => {
+        audio.pause();
+        URL.revokeObjectURL(audio.src);
+      };
+
+      recognition.start();
+    });
   };
 
   const uploadVoiceNote = async (blob, transcript) => {
