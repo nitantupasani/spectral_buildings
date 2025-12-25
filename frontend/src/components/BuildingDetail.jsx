@@ -103,7 +103,7 @@ const BuildingDetail = () => {
       case 'voice':
         return (
           <div>
-            <audio controls src={resolveFileUrl(note.fileUrl)} />
+            <audio controls src={resolveFileUrl(note.fileUrl)} crossOrigin="anonymous" />
             {note.transcription && (
               <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
                 <strong>Transcription:</strong> {note.transcription}
@@ -132,7 +132,7 @@ const BuildingDetail = () => {
                             <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
                               🎵 {att.originalName}
                             </div>
-                            <audio controls src={resolveFileUrl(att.fileUrl)} style={{ width: '100%' }} />
+                            <audio controls src={resolveFileUrl(att.fileUrl)} crossOrigin="anonymous" style={{ width: '100%' }} />
                           </div>
                         ) : (
                           <button
