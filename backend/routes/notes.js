@@ -6,7 +6,7 @@ const { body, validationResult } = require('express-validator');
 const os = require('os');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
-const { WaveFile } = require('wavefile');
+const { openaiApiKey } = require('../config/env');
 
 const router = express.Router();
 
@@ -58,13 +58,36 @@ const memoryUpload = multer({
   }
 });
 
-let transcriberPromise = null;
-const getTranscriber = async () => {
-  if (!transcriberPromise) {
-    const { pipeline } = await import('@xenova/transformers');
-    transcriberPromise = pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key is not configured');
   }
-  return transcriberPromise;
+
+  const formData = new FormData();
+  const file = new File(
+    [buffer],
+    filename || 'audio.webm',
+    { type: mimetype || 'audio/webm' }
+  );
+
+  formData.append('file', file);
+  formData.append('model', 'whisper-1');
+
+  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${openaiApiKey}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI transcription failed: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data?.text?.trim() || '';
 };
 
 // Get all notes for a building
@@ -111,28 +134,19 @@ router.post('/text', [auth, [
   }
 });
 
-// Transcribe voice note using Whisper (free, on-device)
+// Transcribe voice note using OpenAI Whisper API
 router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No audio file uploaded' });
     }
 
-    // Read WAV file and extract audio data
-    const wav = new WaveFile(req.file.buffer);
-    
-    // Convert to 16kHz mono if needed
-    wav.toSampleRate(16000);
-    wav.toMono();
-    
-    // Get the samples as Float32Array
-    const samples = wav.getSamples(false, Float32Array);
-    const audioData = samples[0] || samples;
-
-    const transcriber = await getTranscriber();
-    const result = await transcriber(audioData);
-    const transcription = result?.text?.trim() || '';
-    
+    const transcription = await transcribeWithOpenAI(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype
+    );
+ 
     return res.json({ transcription });
   } catch (error) {
     console.error('Transcription error:', error);
@@ -192,13 +206,30 @@ router.post('/voice', [auth, upload.fields([
       mimeType: file.mimetype
     }));
 
+    let finalTranscription = transcription || '';
+
+    // Auto-transcribe if none provided
+    if (!finalTranscription && audioFile) {
+      try {
+        const audioPath = path.join(uploadsDir, audioFile.filename);
+        const buffer = fs.readFileSync(audioPath);
+        finalTranscription = await transcribeWithOpenAI(
+          buffer,
+          audioFile.originalname || audioFile.filename,
+          audioFile.mimetype
+        );
+      } catch (transcribeErr) {
+        console.error('Voice upload transcription error:', transcribeErr);
+      }
+    }
+
     // Create voice note with attachments
     const note = new Note({
       building: buildingId,
       user: req.user.userId,
       type: 'voice',
-      content: transcription || 'Voice note',
-      transcription: transcription || '',
+      content: finalTranscription || 'Voice note',
+      transcription: finalTranscription || '',
       description: description || '',
       fileUrl: `/uploads/${audioFile.filename}`,
       attachments: attachments

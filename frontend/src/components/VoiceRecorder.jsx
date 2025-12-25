@@ -143,6 +143,7 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
       return transcript;
     } catch (err) {
       console.error('Transcription error:', err);
+
       setError(err.message || 'Failed to transcribe audio. Please try again.');
       return '';
     } finally {
@@ -171,7 +172,8 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     try {
       const formData = new FormData();
       formData.append('buildingId', buildingId);
-      formData.append('audio', audioBlob, 'voice-note.webm');
+      const extension = audioBlob?.type === 'audio/wav' ? 'wav' : 'webm';
+      formData.append('audio', audioBlob, `voice-note.${extension}`);
       formData.append('transcription', transcription);
       formData.append('description', description);
       
