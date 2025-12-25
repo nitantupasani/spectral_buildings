@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Building = require('./models/Building');
+const Note = require('./models/Note');
 
 const seedDatabase = async () => {
   try {
@@ -13,6 +14,7 @@ const seedDatabase = async () => {
     // Clear existing data
     await User.deleteMany({});
     await Building.deleteMany({});
+    await Note.deleteMany({});
     console.log('Cleared existing data');
 
     // Hash passwords
@@ -38,7 +40,7 @@ const seedDatabase = async () => {
     });
     console.log('✅ Engineer user created');
 
-    // Create sample buildings
+    // Create sample buildings (shared visibility for all users)
     const buildings = await Building.insertMany([
       {
         name: 'Spectral Tower A',
@@ -60,9 +62,65 @@ const seedDatabase = async () => {
         description: 'Primary data center with advanced cooling systems',
         status: 'maintenance',
         createdBy: adminUser._id
+      },
+      {
+        name: 'Green Energy Hub',
+        address: '12 Solar Way, Denver, CO 80202',
+        description: 'Pilot site for renewable microgrid integration',
+        status: 'active',
+        createdBy: engineerUser._id
+      },
+      {
+        name: 'Logistics Operations Center',
+        address: '240 Warehouse Ave, Dallas, TX 75201',
+        description: 'Logistics hub with loading bay HVAC modernization',
+        status: 'inactive',
+        createdBy: engineerUser._id
       }
     ]);
     console.log(`✅ Created ${buildings.length} sample buildings`);
+
+    // Seed sample notes for quick testing
+    const notes = await Note.insertMany([
+      {
+        building: buildings[0]._id,
+        user: adminUser._id,
+        type: 'text',
+        content: 'Baseline inspection complete; elevators recalibrated.'
+      },
+      {
+        building: buildings[0]._id,
+        user: engineerUser._id,
+        type: 'link',
+        content: 'https://docs.spectral.com/ahu-maintenance',
+        description: 'AHU maintenance checklist'
+      },
+      {
+        building: buildings[1]._id,
+        user: adminUser._id,
+        type: 'text',
+        content: 'R&D lab expansion approved; coordinate with facilities.'
+      },
+      {
+        building: buildings[2]._id,
+        user: engineerUser._id,
+        type: 'text',
+        content: 'Cooling loop flush scheduled for Friday 10:00.'
+      },
+      {
+        building: buildings[3]._id,
+        user: engineerUser._id,
+        type: 'text',
+        content: 'Solar array inverter firmware updated to 2.1.4.'
+      },
+      {
+        building: buildings[4]._id,
+        user: adminUser._id,
+        type: 'text',
+        content: 'Loading bay HVAC survey complete; awaiting parts list.'
+      }
+    ]);
+    console.log(`✅ Created ${notes.length} sample notes`);
 
     console.log('\n🎉 Database seeded successfully!\n');
     console.log('═══════════════════════════════════════');
