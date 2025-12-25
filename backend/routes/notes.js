@@ -8,6 +8,14 @@ const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { openaiApiKey } = require('../config/env');
 
+// Import undici for fetch, FormData, and File support
+let undici;
+try {
+  undici = require('undici');
+} catch (err) {
+  console.warn('undici not available, will use globals if present');
+}
+
 const router = express.Router();
 
 const allowedFileTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a|pdf|doc|docx|xls|xlsx|csv|ppt|pptx|txt/;
@@ -64,19 +72,14 @@ const getRequestHelpers = async () => {
   let fetchFn = globalThis.fetch;
 
   if (!FormDataCtor || !FileCtor || !fetchFn) {
-    try {
-      // Use built-in undici from Node (no external package needed)
-      // eslint-disable-next-line node/no-unsupported-features/node-builtins
-      const undici = require('node:undici');
-      FormDataCtor = FormDataCtor || undici.FormData;
-      FileCtor = FileCtor || undici.File;
-      fetchFn = fetchFn || undici.fetch;
-    } catch (err) {
-      const error = new Error('Transcription requires fetch, FormData, and File (Node 18+ or node:undici globals)');
-      error.cause = err;
+    if (!undici) {
+      const error = new Error('Transcription requires fetch, FormData, and File (Node 18+ globals or undici package)');
       error.statusCode = 503;
       throw error;
     }
+    FormDataCtor = FormDataCtor || undici.FormData;
+    FileCtor = FileCtor || undici.File;
+    fetchFn = fetchFn || undici.fetch;
   }
 
   return { FormData: FormDataCtor, File: FileCtor, fetch: fetchFn };
