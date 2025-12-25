@@ -130,6 +130,18 @@ Open your browser and navigate to:
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:5000/api
 
+## 🌐 Deploying the frontend to Netlify
+
+The repository includes a `netlify.toml` that points Netlify at the `frontend` workspace, runs the Vite build, and enables single-page-app routing.
+
+1. **Create a new Netlify site from Git** and select this repository.
+2. Netlify will auto-detect the settings from `netlify.toml`:
+   - **Base directory**: `frontend`
+   - **Build command**: `npm run build`
+   - **Publish directory**: `dist`
+3. In **Site Settings → Environment variables**, add `VITE_API_URL` pointing at your deployed backend (for example, `https://your-backend.example.com/api`).
+4. Deploy. Netlify will install dependencies, build the Vite app, and publish the contents of `frontend/dist`.
+
 ## 👤 User Roles & Permissions
 
 ### Admin Role
