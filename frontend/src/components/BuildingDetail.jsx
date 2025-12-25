@@ -71,7 +71,18 @@ const BuildingDetail = () => {
   };
 
   const renderNoteContent = (note) => {
-    const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    // Get the API base URL and ensure it's just the domain (no /api suffix)
+    const getApiBaseUrl = () => {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      // Extract just the domain part
+      if (apiUrl.includes('://')) {
+        const url = new URL(apiUrl);
+        return `${url.protocol}//${url.host}`;
+      }
+      return 'http://localhost:5000';
+    };
+    
+    const apiUrl = getApiBaseUrl();
 
     const resolveFileUrl = (fileUrl) => {
       if (!fileUrl) return '';
