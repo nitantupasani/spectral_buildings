@@ -244,6 +244,10 @@ const result = await transcriber(audioBuffer);
 - [ ] Audit logs
 - [ ] Mobile app version
 
+## 🌐 Backend-only VM deployment (Google Cloud quickstart)
+
+If you want to stand up just the backend on a small Google Compute Engine VM and hit it directly by IP before adding a domain, follow `docs/backend-vm-deploy.md` for copy-paste commands. A domain + HTTPS can be added later without changing the backend setup.
+
 ## 🐛 Troubleshooting
 
 ### MongoDB Connection Issues
