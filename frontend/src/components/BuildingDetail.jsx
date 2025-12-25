@@ -72,6 +72,16 @@ const BuildingDetail = () => {
 
   const renderNoteContent = (note) => {
     const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
+    const resolveFileUrl = (fileUrl) => {
+      if (!fileUrl) return '';
+      // If the stored URL is already absolute (e.g., older data with localhost),
+      // use it as-is; otherwise prefix with the API host.
+      if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+        return fileUrl;
+      }
+      return `${apiUrl}${fileUrl}`;
+    };
     
     switch (note.type) {
       case 'text':
@@ -93,7 +103,7 @@ const BuildingDetail = () => {
       case 'voice':
         return (
           <div>
-            <audio controls src={`${apiUrl}${note.fileUrl}`} />
+            <audio controls src={resolveFileUrl(note.fileUrl)} />
             {note.transcription && (
               <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
                 <strong>Transcription:</strong> {note.transcription}
@@ -108,29 +118,29 @@ const BuildingDetail = () => {
               <div style={{ marginTop: '10px' }}>
                 <strong>Attachments:</strong>
                 <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {note.attachments.map((att, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {att.mimeType?.startsWith('image/') ? (
-                        <img 
-                          src={`${apiUrl}${att.fileUrl}`} 
-                          alt={att.originalName}
-                          onClick={() => setViewingAttachment({ url: `${apiUrl}${att.fileUrl}`, name: att.originalName, type: 'image' })}
-                          style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', cursor: 'pointer' }}
-                        />
-                      ) : att.mimeType?.startsWith('audio/') ? (
-                        <div style={{ width: '100%' }}>
-                          <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
-                            🎵 {att.originalName}
+                    {note.attachments.map((att, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {att.mimeType?.startsWith('image/') ? (
+                          <img 
+                            src={resolveFileUrl(att.fileUrl)} 
+                            alt={att.originalName}
+                            onClick={() => setViewingAttachment({ url: resolveFileUrl(att.fileUrl), name: att.originalName, type: 'image' })}
+                            style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', cursor: 'pointer' }}
+                          />
+                        ) : att.mimeType?.startsWith('audio/') ? (
+                          <div style={{ width: '100%' }}>
+                            <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
+                              🎵 {att.originalName}
+                            </div>
+                            <audio controls src={resolveFileUrl(att.fileUrl)} style={{ width: '100%' }} />
                           </div>
-                          <audio controls src={`${apiUrl}${att.fileUrl}`} style={{ width: '100%' }} />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setViewingAttachment({ url: `${apiUrl}${att.fileUrl}`, name: att.originalName, type: 'document' })}
-                          style={{ 
-                            color: 'var(--primary-color)', 
-                            textDecoration: 'underline',
-                            background: 'none',
+                        ) : (
+                          <button
+                            onClick={() => setViewingAttachment({ url: resolveFileUrl(att.fileUrl), name: att.originalName, type: 'document' })}
+                            style={{ 
+                              color: 'var(--primary-color)', 
+                              textDecoration: 'underline',
+                              background: 'none',
                             border: 'none',
                             cursor: 'pointer',
                             padding: 0,
