@@ -134,6 +134,15 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
 
     try {
       const wavBlob = await convertToWav(blob);
+
+      // Use WAV for playback/upload after conversion
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+      const wavUrl = URL.createObjectURL(wavBlob);
+      setAudioBlob(wavBlob);
+      setAudioUrl(wavUrl);
+
       const formData = new FormData();
       formData.append('audio', wavBlob, 'recording.wav');
 

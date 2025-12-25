@@ -59,17 +59,43 @@ const memoryUpload = multer({
   }
 });
 
-const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
-  if (!openaiApiKey) {
-    throw new Error('OpenAI API key is not configured');
+const getRequestHelpers = async () => {
+  let FormDataCtor = globalThis.FormData;
+  let FileCtor = globalThis.File;
+  let fetchFn = globalThis.fetch;
+
+  if (!FormDataCtor || !FileCtor || !fetchFn) {
+    try {
+      // Use built-in undici from Node (no external package needed)
+      // eslint-disable-next-line node/no-unsupported-features/node-builtins
+      const undici = require('node:undici');
+      FormDataCtor = FormDataCtor || undici.FormData;
+      FileCtor = FileCtor || undici.File;
+      fetchFn = fetchFn || undici.fetch;
+    } catch (err) {
+      const error = new Error('Transcription requires fetch, FormData, and File (Node 18+ or node:undici globals)');
+      error.cause = err;
+      error.statusCode = 503;
+      throw error;
+    }
   }
 
+  return { FormData: FormDataCtor, File: FileCtor, fetch: fetchFn };
+};
+
+const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
+  if (!openaiApiKey) {
+    const error = new Error('OpenAI API key is not configured');
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const { FormData, File, fetch } = await getRequestHelpers();
+
   const formData = new FormData();
-  const file = new File(
-    [buffer],
-    filename || 'audio.webm',
-    { type: mimetype || 'audio/webm' }
-  );
+  const file = new File([buffer], filename || 'audio.webm', {
+    type: mimetype || 'audio/webm'
+  });
 
   formData.append('file', file);
   formData.append('model', 'whisper-1');
@@ -84,7 +110,9 @@ const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`OpenAI transcription failed: ${errorText}`);
+    const error = new Error(`OpenAI transcription failed: ${errorText}`);
+    error.statusCode = response.status;
+    throw error;
   }
 
   const data = await response.json();
@@ -147,7 +175,7 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
       req.file.originalname,
       req.file.mimetype
     );
- 
+
     return res.json({ transcription });
   } catch (error) {
     console.error('Transcription error:', error);
