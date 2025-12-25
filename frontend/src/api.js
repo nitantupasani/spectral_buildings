@@ -44,6 +44,10 @@ export const notesAPI = {
   createImage: (formData) => api.post('/notes/image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  update: (id, formData) => api.put(`/notes/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getHistory: (id) => api.get(`/notes/${id}/history`),
   delete: (id) => api.delete(`/notes/${id}`)
 };
 

@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { buildingsAPI, notesAPI } from '../api';
 import { formatDistanceToNow } from 'date-fns';
 import AddNoteModal from './AddNoteModal';
+import EditNoteModal from './EditNoteModal';
+import RevisionHistory from './RevisionHistory';
 import VoiceRecorder from './VoiceRecorder';
 
 const BuildingDetail = () => {
@@ -12,6 +14,9 @@ const BuildingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [editingNote, setEditingNote] = useState(null);
+  const [viewingHistory, setViewingHistory] = useState(null);
 
   useEffect(() => {
     fetchBuilding();
@@ -46,6 +51,11 @@ const BuildingDetail = () => {
   const handleVoiceNoteAdded = (newNote) => {
     setNotes([newNote, ...notes]);
     setShowVoiceRecorder(false);
+  };
+
+  const handleNoteUpdated = (updatedNote) => {
+    setNotes(notes.map(note => note._id === updatedNote._id ? updatedNote : note));
+    setEditingNote(null);
   };
 
   const handleDeleteNote = async (noteId) => {
@@ -87,6 +97,52 @@ const BuildingDetail = () => {
             {note.transcription && (
               <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
                 <strong>Transcription:</strong> {note.transcription}
+              </div>
+            )}
+            {note.description && (
+              <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '6px' }}>
+                <strong>Description:</strong> {note.description}
+              </div>
+            )}
+            {note.attachments && note.attachments.length > 0 && (
+              <div style={{ marginTop: '10px' }}>
+                <strong>Attachments:</strong>
+                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {note.attachments.map((att, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {att.mimeType?.startsWith('image/') ? (
+                        <img 
+                          src={`${apiUrl}${att.fileUrl}`} 
+                          alt={att.originalName}
+                          onClick={() => setViewingAttachment({ url: `${apiUrl}${att.fileUrl}`, name: att.originalName, type: 'image' })}
+                          style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', cursor: 'pointer' }}
+                        />
+                      ) : att.mimeType?.startsWith('audio/') ? (
+                        <div style={{ width: '100%' }}>
+                          <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
+                            🎵 {att.originalName}
+                          </div>
+                          <audio controls src={`${apiUrl}${att.fileUrl}`} style={{ width: '100%' }} />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setViewingAttachment({ url: `${apiUrl}${att.fileUrl}`, name: att.originalName, type: 'document' })}
+                          style={{ 
+                            color: 'var(--primary-color)', 
+                            textDecoration: 'underline',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            font: 'inherit'
+                          }}
+                        >
+                          📎 {att.originalName}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -166,11 +222,32 @@ const BuildingDetail = () => {
                     <span className={`note-type-badge note-type-${note.type}`} style={{ marginLeft: '10px' }}>
                       {note.type}
                     </span>
+                    {note.editedBy && (
+                      <span style={{ marginLeft: '10px', fontSize: '12px', color: 'var(--secondary-color)', fontStyle: 'italic' }}>
+                        (edited by {note.editedBy.username} {formatDistanceToNow(new Date(note.editedAt), { addSuffix: true })})
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span className="note-time">
                       {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+                    {note.editHistory && note.editHistory.length > 0 && (
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 8px', fontSize: '12px' }}
+                        onClick={() => setViewingHistory(note._id)}
+                      >
+                        View History
+                      </button>
+                    )}
                     </span>
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '4px 8px', fontSize: '12px' }}
+                      onClick={() => setEditingNote(note)}
+                    >
+                      Edit
+                    </button>
                     <button
                       className="btn btn-danger"
                       style={{ padding: '4px 8px', fontSize: '12px' }}
@@ -201,6 +278,64 @@ const BuildingDetail = () => {
           onClose={() => setShowVoiceRecorder(false)}
           onVoiceNoteAdded={handleVoiceNoteAdded}
         />
+      )}
+
+      {editingNote && (
+        <EditNoteModal
+          note={editingNote}
+          onClose={() => setEditingNote(null)}
+          onNoteUpdated={handleNoteUpdated}
+        />
+      )}
+
+      {viewingHistory && (
+        <RevisionHistory
+          noteId={viewingHistory}
+          onClose={() => setViewingHistory(null)}
+        />
+      )}
+
+      {viewingAttachment && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setViewingAttachment(null)}
+          style={{ zIndex: 1000 }}
+        >
+          <div 
+            className="modal" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '90vw', maxHeight: '90vh', overflow: 'auto' }}
+          >
+            <div className="modal-header">
+              <h3>{viewingAttachment.name}</h3>
+              <button className="close-btn" onClick={() => setViewingAttachment(null)}>&times;</button>
+            </div>
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              {viewingAttachment.type === 'image' ? (
+                <img 
+                  src={viewingAttachment.url} 
+                  alt={viewingAttachment.name}
+                  style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+                />
+              ) : (
+                <iframe
+                  src={viewingAttachment.url}
+                  style={{ width: '100%', height: '80vh', border: 'none' }}
+                  title={viewingAttachment.name}
+                />
+              )}
+              <div style={{ marginTop: '20px' }}>
+                <a 
+                  href={viewingAttachment.url} 
+                  download={viewingAttachment.name}
+                  className="btn btn-primary"
+                >
+                  Download
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

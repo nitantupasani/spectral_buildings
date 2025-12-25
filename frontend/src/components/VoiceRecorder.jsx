@@ -6,13 +6,14 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
   const [transcription, setTranscription] = useState('');
+  const [description, setDescription] = useState('');
+  const [attachments, setAttachments] = useState([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [autoProcessing, setAutoProcessing] = useState(false);
-  const [autoTriggered, setAutoTriggered] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -99,12 +100,14 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
         audioChunksRef.current.push(event.data);
       };
 
-      mediaRecorderRef.current.onstop = () => {
+      mediaRecorderRef.current.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach(track => track.stop());
-        setAutoTriggered(false);
+        
+        // Auto-transcribe after recording
+        await transcribeAudio(blob);
       };
 
       mediaRecorderRef.current.start();
@@ -155,13 +158,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
       recognition.continuous = false;
       recognition.interimResults = false;
 
-      // Create an audio element to play the recorded blob
-      const audio = new Audio(URL.createObjectURL(blob));
-      
-      recognition.onstart = () => {
-        audio.play();
-      };
-
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setTranscription(transcript);
@@ -172,27 +168,43 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
         reject(new Error(`Speech recognition error: ${event.error}`));
       };
 
-      recognition.onend = () => {
-        audio.pause();
-        URL.revokeObjectURL(audio.src);
-      };
-
       recognition.start();
     });
   };
 
-  const uploadVoiceNote = async (blob, transcript) => {
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setAttachments(prev => [...prev, ...files]);
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (!audioBlob) {
+      setError('No audio recorded');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const formData = new FormData();
       formData.append('buildingId', buildingId);
-      formData.append('audio', blob, 'voice-note.webm');
-      formData.append('transcription', transcript);
+      formData.append('audio', audioBlob, 'voice-note.webm');
+      formData.append('transcription', transcription);
+      formData.append('description', description);
+      
+      // Append all attachment files
+      attachments.forEach((file, index) => {
+        formData.append(`attachments`, file);
+      });
 
       const response = await notesAPI.createVoice(formData);
       onVoiceNoteAdded(response.data);
+      onClose();
     } catch (err) {
       console.error('Upload error:', err);
       setError(err.response?.data?.message || 'Failed to upload voice note');
@@ -201,21 +213,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     }
   };
 
-  useEffect(() => {
-    const processRecording = async () => {
-      setAutoProcessing(true);
-      const transcript = await transcribeAudio(audioBlob);
-      await uploadVoiceNote(audioBlob, transcript);
-      setAutoProcessing(false);
-    };
-
-    if (audioBlob && !autoTriggered) {
-      setAutoTriggered(true);
-      processRecording();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioBlob, autoTriggered]);
-
   const handleReset = () => {
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -223,8 +220,8 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     setAudioBlob(null);
     setAudioUrl(null);
     setTranscription('');
-    setAutoProcessing(false);
-    setAutoTriggered(false);
+    setDescription('');
+    setAttachments([]);
     audioChunksRef.current = [];
   };
 
@@ -267,31 +264,98 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
             <div style={{ marginTop: '20px' }}>
               <audio controls src={audioUrl} style={{ width: '100%' }} />
               
-              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleReset}
-                  disabled={isTranscribing || loading || autoProcessing}
-                >
-                  Record Again
-                </button>
-              </div>
-
               <div className="form-group" style={{ marginTop: '20px', textAlign: 'left' }}>
-                <label>Transcription</label>
+                <label>Transcription {isTranscribing && <span style={{ color: 'var(--secondary-color)' }}>(Transcribing...)</span>}</label>
                 <textarea
                   className="form-control"
                   rows="4"
                   value={transcription}
-                  readOnly
-                  placeholder="Transcription will appear automatically after recording stops"
+                  onChange={(e) => setTranscription(e.target.value)}
+                  placeholder="Transcription will appear automatically after recording stops. You can edit it if needed."
                 />
               </div>
-              {(isTranscribing || loading || autoProcessing) && (
-                <div style={{ marginTop: '10px', color: 'var(--secondary-color)' }}>
-                  {isTranscribing ? 'Transcribing...' : 'Uploading voice note...'}
-                </div>
-              )}
+
+              <div className="form-group" style={{ marginTop: '15px', textAlign: 'left' }}>
+                <label>Description (Optional)</label>
+                <textarea
+                  className="form-control"
+                  rows="3"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add additional notes, context, or description..."
+                />
+              </div>
+
+              <div className="form-group" style={{ marginTop: '15px', textAlign: 'left' }}>
+                <label>Attachments (Optional)</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ width: '100%', marginBottom: '10px' }}
+                >
+                  📎 Add Files (Images, PDF, Excel, PowerPoint, etc.)
+                </button>
+                
+                {attachments.length > 0 && (
+                  <div style={{ marginTop: '10px' }}>
+                    {attachments.map((file, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px',
+                          backgroundColor: '#f8fafc',
+                          borderRadius: '4px',
+                          marginBottom: '5px'
+                        }}
+                      >
+                        <span style={{ fontSize: '14px' }}>📄 {file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(index)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--danger-color)',
+                            cursor: 'pointer',
+                            fontSize: '18px'
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleReset}
+                  disabled={isTranscribing || loading}
+                >
+                  Record Again
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSubmit}
+                  disabled={isTranscribing || loading}
+                >
+                  {loading ? 'Uploading...' : 'Submit Voice Note'}
+                </button>
+              </div>
             </div>
           )}
         </div>

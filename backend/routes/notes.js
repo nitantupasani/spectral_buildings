@@ -11,7 +11,7 @@ const { WaveFile } = require('wavefile');
 
 const router = express.Router();
 
-const allowedFileTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a/;
+const allowedFileTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a|pdf|doc|docx|xls|xlsx|csv|ppt|pptx|txt/;
 const audioOnlyTypes = /mp3|wav|webm|ogg|m4a/;
 
 // Create uploads directory if it doesn't exist
@@ -72,6 +72,7 @@ router.get('/building/:buildingId', auth, async (req, res) => {
   try {
     const notes = await Note.find({ building: req.params.buildingId })
       .populate('user', 'username email')
+      .populate('editedBy', 'username')
       .sort({ createdAt: -1 });
     res.json(notes);
   } catch (error) {
@@ -169,22 +170,38 @@ router.post('/link', [auth, [
   }
 });
 
-// Upload voice note
-router.post('/voice', [auth, upload.single('audio')], async (req, res) => {
+// Upload voice note with optional attachments
+router.post('/voice', [auth, upload.fields([
+  { name: 'audio', maxCount: 1 },
+  { name: 'attachments', maxCount: 10 }
+])], async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || !req.files.audio || !req.files.audio[0]) {
       return res.status(400).json({ message: 'No audio file uploaded' });
     }
 
-    const { buildingId, transcription, content } = req.body;
+    const { buildingId, transcription, description } = req.body;
+    const audioFile = req.files.audio[0];
+    const attachmentFiles = req.files.attachments || [];
 
+    // Prepare attachments array
+    const attachments = attachmentFiles.map(file => ({
+      filename: file.filename,
+      originalName: file.originalname,
+      fileUrl: `/uploads/${file.filename}`,
+      mimeType: file.mimetype
+    }));
+
+    // Create voice note with attachments
     const note = new Note({
       building: buildingId,
       user: req.user.userId,
       type: 'voice',
-      content: (content && content.trim()) ? content.trim() : 'Voice note',
+      content: transcription || 'Voice note',
       transcription: transcription || '',
-      fileUrl: `/uploads/${req.file.filename}`
+      description: description || '',
+      fileUrl: `/uploads/${audioFile.filename}`,
+      attachments: attachments
     });
 
     await note.save();
@@ -248,6 +265,138 @@ router.delete('/:id', auth, async (req, res) => {
 
     await note.deleteOne();
     res.json({ message: 'Note deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update a note
+router.put('/:id', auth, upload.fields([
+  { name: 'attachments', maxCount: 10 },
+  { name: 'audio', maxCount: 5 }
+]), async (req, res) => {
+  try {
+    const { content, description, transcription, removeAttachments } = req.body;
+    const note = await Note.findById(req.params.id).populate('user', 'username');
+
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+
+    // Store previous values for revision history
+    const previousValues = {
+      content: note.content,
+      description: note.description,
+      transcription: note.transcription,
+      attachments: [...(note.attachments || [])]
+    };
+
+    // Track what changed
+    let changes = [];
+    
+    if (content && content !== note.content) {
+      changes.push('content');
+      note.content = content;
+    }
+    if (description !== undefined && description !== note.description) {
+      changes.push('description');
+      note.description = description;
+    }
+    if (transcription !== undefined && transcription !== note.transcription) {
+      changes.push('transcription');
+      note.transcription = transcription;
+    }
+
+    // Handle attachment removals
+    if (removeAttachments) {
+      const toRemove = JSON.parse(removeAttachments);
+      if (toRemove.length > 0) {
+        changes.push('removed attachments');
+        // Remove files from disk
+        toRemove.forEach(filename => {
+          const filePath = path.join(__dirname, '../uploads', filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        });
+        // Remove from array
+        note.attachments = note.attachments.filter(att => !toRemove.includes(att.filename));
+      }
+    }
+
+    // Handle new attachments
+    if (req.files) {
+      const newAttachments = [];
+      
+      // Handle regular attachments
+      if (req.files.attachments) {
+        req.files.attachments.forEach(file => {
+          newAttachments.push({
+            filename: file.filename,
+            originalName: file.originalname,
+            fileUrl: `/uploads/${file.filename}`,
+            mimeType: file.mimetype
+          });
+        });
+      }
+
+      // Handle audio files
+      if (req.files.audio) {
+        req.files.audio.forEach(file => {
+          newAttachments.push({
+            filename: file.filename,
+            originalName: file.originalname,
+            fileUrl: `/uploads/${file.filename}`,
+            mimeType: file.mimetype
+          });
+        });
+      }
+
+      if (newAttachments.length > 0) {
+        changes.push('added attachments');
+        note.attachments = [...(note.attachments || []), ...newAttachments];
+      }
+    }
+
+    if (changes.length > 0) {
+      // Add to edit history with previous values
+      note.editHistory.push({
+        editedBy: req.user.userId,
+        editedAt: new Date(),
+        changes: changes.join(', '),
+        previousValues
+      });
+
+      // Update top-level edit tracking
+      note.editedBy = req.user.userId;
+      note.editedAt = new Date();
+
+      await note.save();
+      
+      // Populate editedBy for response
+      await note.populate('editedBy', 'username');
+    }
+
+    res.json(note);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get revision history for a note
+router.get('/:id/history', auth, async (req, res) => {
+  try {
+    const note = await Note.findById(req.params.id)
+      .populate('editHistory.editedBy', 'username')
+      .select('editHistory');
+    
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+
+    res.json(note.editHistory);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
