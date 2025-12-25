@@ -61,15 +61,15 @@ const memoryUpload = multer({
 
 const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
   if (!openaiApiKey) {
-    const error = new Error('OpenAI API key is not configured');
-    error.statusCode = 503;
-    throw error;
+    throw new Error('OpenAI API key is not configured');
   }
 
   const formData = new FormData();
-  const file = new File([buffer], filename || 'audio.webm', {
-    type: mimetype || 'audio/webm'
-  });
+  const file = new File(
+    [buffer],
+    filename || 'audio.webm',
+    { type: mimetype || 'audio/webm' }
+  );
 
   formData.append('file', file);
   formData.append('model', 'whisper-1');
@@ -84,9 +84,7 @@ const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
 
   if (!response.ok) {
     const errorText = await response.text();
-    const error = new Error(`OpenAI transcription failed: ${errorText}`);
-    error.statusCode = response.status;
-    throw error;
+    throw new Error(`OpenAI transcription failed: ${errorText}`);
   }
 
   const data = await response.json();
@@ -149,7 +147,7 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
       req.file.originalname,
       req.file.mimetype
     );
-
+ 
     return res.json({ transcription });
   } catch (error) {
     console.error('Transcription error:', error);
