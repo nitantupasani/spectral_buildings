@@ -1,4 +1,5 @@
-require('dotenv').config();
+// Load environment variables from .env.local first (for secrets like API keys) and fall back to .env
+require('./config/env');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
