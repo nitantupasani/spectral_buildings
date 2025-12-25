@@ -22,6 +22,77 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     };
   }, [audioUrl]);
 
+  useEffect(() => {
+    additionalInfoRef.current = additionalInfo;
+  }, [additionalInfo]);
+
+  const convertToWav = async (blob) => {
+    const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OfflineCtx) {
+      throw new Error('Offline audio processing is not supported in this browser.');
+    }
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioContext = new AudioContext();
+    try {
+      const decoded = await audioContext.decodeAudioData(arrayBuffer);
+      const targetSampleRate = 16000;
+      const offlineContext = new OfflineCtx(
+        decoded.numberOfChannels,
+        Math.ceil(decoded.duration * targetSampleRate),
+        targetSampleRate
+      );
+      const source = offlineContext.createBufferSource();
+      source.buffer = decoded;
+      source.connect(offlineContext.destination);
+      source.start(0);
+      const resampled = await offlineContext.startRendering();
+
+      const numChannels = resampled.numberOfChannels;
+      const sampleRate = resampled.sampleRate;
+      const samples = resampled.length;
+      const buffer = new ArrayBuffer(44 + samples * numChannels * 2);
+      const view = new DataView(buffer);
+
+      const writeString = (viewRef, offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+          viewRef.setUint8(offset + i, string.charCodeAt(i));
+        }
+      };
+
+      writeString(view, 0, 'RIFF');
+      view.setUint32(4, 36 + samples * numChannels * 2, true);
+      writeString(view, 8, 'WAVE');
+      writeString(view, 12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * numChannels * 2, true);
+      view.setUint16(32, numChannels * 2, true);
+      view.setUint16(34, 16, true);
+      writeString(view, 36, 'data');
+      view.setUint32(40, samples * numChannels * 2, true);
+
+      const interleaved = new Float32Array(samples * numChannels);
+      for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = resampled.getChannelData(channel);
+        for (let i = 0; i < samples; i++) {
+          interleaved[i * numChannels + channel] = channelData[i];
+        }
+      }
+
+      let offset = 44;
+      for (let i = 0; i < interleaved.length; i++, offset += 2) {
+        let sample = Math.max(-1, Math.min(1, interleaved[i]));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      }
+
+      return new Blob([view], { type: 'audio/wav' });
+    } finally {
+      audioContext.close();
+    }
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

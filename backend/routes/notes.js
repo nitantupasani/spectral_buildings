@@ -174,13 +174,13 @@ router.post('/voice', [auth, upload.single('audio')], async (req, res) => {
       return res.status(400).json({ message: 'No audio file uploaded' });
     }
 
-    const { buildingId, transcription } = req.body;
+    const { buildingId, transcription, content } = req.body;
 
     const note = new Note({
       building: buildingId,
       user: req.user.userId,
       type: 'voice',
-      content: 'Voice note',
+      content: (content && content.trim()) ? content.trim() : 'Voice note',
       transcription: transcription || '',
       fileUrl: `/uploads/${req.file.filename}`
     });
