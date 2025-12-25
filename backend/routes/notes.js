@@ -8,14 +8,6 @@ const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { openaiApiKey } = require('../config/env');
 
-// Import undici for fetch, FormData, and File support
-let undici;
-try {
-  undici = require('undici');
-} catch (err) {
-  console.warn('undici not available, will use globals if present');
-}
-
 const router = express.Router();
 
 const allowedFileTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a|pdf|doc|docx|xls|xlsx|csv|ppt|pptx|txt/;
@@ -71,7 +63,11 @@ const getRequestHelpers = async () => {
   let fetchFn = globalThis.fetch;
 
   if (!FormDataCtor || !fetchFn) {
-    if (!undici) {
+    // Lazy-load undici only when needed to avoid experimental warnings
+    let undici;
+    try {
+      undici = require('undici');
+    } catch (err) {
       const error = new Error('Transcription requires fetch and FormData (Node 18+ globals or undici package)');
       error.statusCode = 503;
       throw error;
