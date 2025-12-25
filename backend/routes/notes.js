@@ -1,0 +1,201 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { body, validationResult } = require('express-validator');
+const Note = require('../models/Note');
+const auth = require('../middleware/auth');
+
+const router = express.Router();
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Invalid file type'));
+  }
+});
+
+// Get all notes for a building
+router.get('/building/:buildingId', auth, async (req, res) => {
+  try {
+    const notes = await Note.find({ building: req.params.buildingId })
+      .populate('user', 'username email')
+      .sort({ createdAt: -1 });
+    res.json(notes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create text note
+router.post('/text', [auth, [
+  body('buildingId').notEmpty(),
+  body('content').notEmpty()
+]], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { buildingId, content } = req.body;
+
+    const note = new Note({
+      building: buildingId,
+      user: req.user.userId,
+      type: 'text',
+      content
+    });
+
+    await note.save();
+    await note.populate('user', 'username email');
+
+    res.status(201).json(note);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create link note
+router.post('/link', [auth, [
+  body('buildingId').notEmpty(),
+  body('content').isURL()
+]], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { buildingId, content } = req.body;
+
+    const note = new Note({
+      building: buildingId,
+      user: req.user.userId,
+      type: 'link',
+      content
+    });
+
+    await note.save();
+    await note.populate('user', 'username email');
+
+    res.status(201).json(note);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Upload voice note
+router.post('/voice', [auth, upload.single('audio')], async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No audio file uploaded' });
+    }
+
+    const { buildingId, transcription } = req.body;
+
+    const note = new Note({
+      building: buildingId,
+      user: req.user.userId,
+      type: 'voice',
+      content: 'Voice note',
+      transcription: transcription || '',
+      fileUrl: `/uploads/${req.file.filename}`
+    });
+
+    await note.save();
+    await note.populate('user', 'username email');
+
+    res.status(201).json(note);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Upload image
+router.post('/image', [auth, upload.single('image')], async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file uploaded' });
+    }
+
+    const { buildingId, content } = req.body;
+
+    const note = new Note({
+      building: buildingId,
+      user: req.user.userId,
+      type: 'image',
+      content: content || 'Image attachment',
+      fileUrl: `/uploads/${req.file.filename}`
+    });
+
+    await note.save();
+    await note.populate('user', 'username email');
+
+    res.status(201).json(note);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete note
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const note = await Note.findById(req.params.id);
+
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+
+    // Check if user owns the note
+    if (note.user.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Delete associated file if exists
+    if (note.fileUrl) {
+      const filePath = path.join(__dirname, '..', note.fileUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    await note.deleteOne();
+    res.json({ message: 'Note deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+module.exports = router;
