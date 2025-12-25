@@ -2,38 +2,6 @@
 
 This is a minimal, copy-paste path to run the Spectral Buildings backend on a single VM and test it via the VM’s IP. You can add a domain + HTTPS later without redoing the backend setup.
 
-## TL;DR: commands to run now on the VM
-If the VM is freshly created, run these in order (Ubuntu/Debian):
-```bash
-# 0) Update + firewall
-sudo apt-get update && sudo apt-get upgrade -y
-sudo ufw allow 22 && sudo ufw allow 80 && sudo ufw allow 443
-sudo ufw --force enable
-
-# 1) Node, git, nginx
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs git nginx
-
-# 2) Docker for MongoDB
-curl -fsSL https://get.docker.com | sh
-sudo systemctl enable docker --now
-sudo mkdir -p /data/mongo
-sudo docker run -d --name mongo -p 127.0.0.1:27017:27017 -v /data/mongo:/data/db mongo:6
-
-# 3) Get code + env
-cd ~
-git clone <your-fork-url> spectral_buildings
-cd spectral_buildings
-cp .env.example .env
-# edit .env with your values (see below)
-
-# 4) Install backend deps + start API
-cd backend
-npm install --omit=dev
-npm run start    # or use pm2 as below
-```
-Then hit `http://<VM-IP>:5000/` from your laptop to confirm it’s working. Continue with PM2 and optional Nginx steps below for a production-like setup.
-
 ## 1) Prep the VM
 1. Create a small VM (e.g., `e2-micro` or `e2-small`) with Ubuntu/Debian.  
 2. Reserve a **static external IP**.  
