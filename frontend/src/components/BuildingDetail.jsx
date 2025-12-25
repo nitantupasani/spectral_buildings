@@ -72,6 +72,36 @@ const BuildingDetail = () => {
 
   const renderNoteContent = (note) => {
     const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const apiBase = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+    const resolveFileUrl = (fileUrl) => {
+      if (!fileUrl) return '';
+      // Always parse with a base to normalize and capture pathname/search
+      try {
+        const parsed = new URL(fileUrl, `${apiBase}/`);
+        const isLocalHost =
+          parsed.hostname === 'localhost' ||
+          parsed.hostname === '127.0.0.1' ||
+          parsed.hostname === '0.0.0.0';
+
+        // If the stored URL was localhost/127, swap host to the deployed API base
+        if (isLocalHost) {
+          return `${apiBase}${parsed.pathname}${parsed.search || ''}`;
+        }
+
+        // If the URL is already absolute to a non-local host, keep it
+        if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+          return parsed.toString();
+        }
+
+        // Otherwise, treat it as relative and prefix with API base
+        return `${apiBase}${parsed.pathname}${parsed.search || ''}`;
+      } catch (e) {
+        // If parsing fails, fall back to a simple prefix
+        const normalized = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+        return `${apiBase}${normalized}`;
+      }
+    };
     
     switch (note.type) {
       case 'text':
@@ -93,7 +123,7 @@ const BuildingDetail = () => {
       case 'voice':
         return (
           <div>
-            <audio controls src={`${apiUrl}${note.fileUrl}`} />
+            <audio controls src={resolveFileUrl(note.fileUrl)} />
             {note.transcription && (
               <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
                 <strong>Transcription:</strong> {note.transcription}
@@ -108,29 +138,29 @@ const BuildingDetail = () => {
               <div style={{ marginTop: '10px' }}>
                 <strong>Attachments:</strong>
                 <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {note.attachments.map((att, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {att.mimeType?.startsWith('image/') ? (
-                        <img 
-                          src={`${apiUrl}${att.fileUrl}`} 
-                          alt={att.originalName}
-                          onClick={() => setViewingAttachment({ url: `${apiUrl}${att.fileUrl}`, name: att.originalName, type: 'image' })}
-                          style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', cursor: 'pointer' }}
-                        />
-                      ) : att.mimeType?.startsWith('audio/') ? (
-                        <div style={{ width: '100%' }}>
-                          <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
-                            🎵 {att.originalName}
+                    {note.attachments.map((att, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {att.mimeType?.startsWith('image/') ? (
+                          <img 
+                            src={resolveFileUrl(att.fileUrl)} 
+                            alt={att.originalName}
+                            onClick={() => setViewingAttachment({ url: resolveFileUrl(att.fileUrl), name: att.originalName, type: 'image' })}
+                            style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', cursor: 'pointer' }}
+                          />
+                        ) : att.mimeType?.startsWith('audio/') ? (
+                          <div style={{ width: '100%' }}>
+                            <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
+                              🎵 {att.originalName}
+                            </div>
+                            <audio controls src={resolveFileUrl(att.fileUrl)} style={{ width: '100%' }} />
                           </div>
-                          <audio controls src={`${apiUrl}${att.fileUrl}`} style={{ width: '100%' }} />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setViewingAttachment({ url: `${apiUrl}${att.fileUrl}`, name: att.originalName, type: 'document' })}
-                          style={{ 
-                            color: 'var(--primary-color)', 
-                            textDecoration: 'underline',
-                            background: 'none',
+                        ) : (
+                          <button
+                            onClick={() => setViewingAttachment({ url: resolveFileUrl(att.fileUrl), name: att.originalName, type: 'document' })}
+                            style={{ 
+                              color: 'var(--primary-color)', 
+                              textDecoration: 'underline',
+                              background: 'none',
                             border: 'none',
                             cursor: 'pointer',
                             padding: 0,
