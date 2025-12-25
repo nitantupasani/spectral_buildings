@@ -133,8 +133,14 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     setError('');
 
     try {
-      // Use browser's Web Speech API (free, no server needed)
-      return await transcribeWithWebSpeechAPI(blob);
+      const wavBlob = await convertToWav(blob);
+      const formData = new FormData();
+      formData.append('audio', wavBlob, 'recording.wav');
+
+      const { data } = await notesAPI.transcribeVoice(formData);
+      const transcript = data?.transcription || '';
+      setTranscription(transcript);
+      return transcript;
     } catch (err) {
       console.error('Transcription error:', err);
       setError(err.message || 'Failed to transcribe audio. Please try again.');
@@ -142,34 +148,6 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     } finally {
       setIsTranscribing(false);
     }
-  };
-
-  const transcribeWithWebSpeechAPI = (blob) => {
-    return new Promise((resolve, reject) => {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
-      if (!SpeechRecognition) {
-        reject(new Error('Speech recognition not supported in this browser'));
-        return;
-      }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setTranscription(transcript);
-        resolve(transcript);
-      };
-
-      recognition.onerror = (event) => {
-        reject(new Error(`Speech recognition error: ${event.error}`));
-      };
-
-      recognition.start();
-    });
   };
 
   const handleFileUpload = (e) => {
