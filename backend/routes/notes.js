@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const os = require('os');
+const { FormData, File } = require('undici');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { openaiApiKey } = require('../config/env');
@@ -58,33 +59,17 @@ const memoryUpload = multer({
   }
 });
 
-const getRequestHelpers = async () => {
-  const FormDataCtor = globalThis.FormData;
-  const FileCtor = globalThis.File;
-  const fetchFn = globalThis.fetch;
-
-  if (!FormDataCtor || !FileCtor || !fetchFn) {
-    const error = new Error('Transcription requires fetch, FormData, and File (Node 18+ or install undici globals)');
-    error.statusCode = 503;
-    throw error;
-  }
-
-  return { FormData: FormDataCtor, File: FileCtor, fetch: fetchFn };
-};
-
 const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
   if (!openaiApiKey) {
-    const error = new Error('OpenAI API key is not configured');
-    error.statusCode = 503;
-    throw error;
+    throw new Error('OpenAI API key is not configured');
   }
 
-  const { FormData, File, fetch } = await getRequestHelpers();
-
   const formData = new FormData();
-  const file = new File([buffer], filename || 'audio.webm', {
-    type: mimetype || 'audio/webm'
-  });
+  const file = new File(
+    [buffer],
+    filename || 'audio.webm',
+    { type: mimetype || 'audio/webm' }
+  );
 
   formData.append('file', file);
   formData.append('model', 'whisper-1');
@@ -99,9 +84,7 @@ const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
 
   if (!response.ok) {
     const errorText = await response.text();
-    const error = new Error(`OpenAI transcription failed: ${errorText}`);
-    error.statusCode = response.status;
-    throw error;
+    throw new Error(`OpenAI transcription failed: ${errorText}`);
   }
 
   const data = await response.json();
@@ -164,7 +147,7 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
       req.file.originalname,
       req.file.mimetype
     );
-
+ 
     return res.json({ transcription });
   } catch (error) {
     console.error('Transcription error:', error);
