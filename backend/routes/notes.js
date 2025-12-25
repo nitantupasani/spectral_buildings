@@ -5,8 +5,12 @@ const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
+const { pipeline } = require('@xenova/transformers');
 
 const router = express.Router();
+
+const allowedFileTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a/;
+const audioOnlyTypes = /mp3|wav|webm|ogg|m4a/;
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -29,9 +33,8 @@ const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|mp3|wav|webm|ogg|m4a/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedFileTypes.test(file.mimetype);
     
     if (mimetype && extname) {
       return cb(null, true);
@@ -39,6 +42,28 @@ const upload = multer({
     cb(new Error('Invalid file type'));
   }
 });
+
+const memoryUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit for transcription
+  fileFilter: (req, file, cb) => {
+    const extname = audioOnlyTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = audioOnlyTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Invalid audio file type'));
+  }
+});
+
+let transcriberPromise = null;
+const getTranscriber = async () => {
+  if (!transcriberPromise) {
+    transcriberPromise = pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+  }
+  return transcriberPromise;
+};
 
 // Get all notes for a building
 router.get('/building/:buildingId', auth, async (req, res) => {
@@ -80,6 +105,23 @@ router.post('/text', [auth, [
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Transcribe voice note using Whisper (free, on-device)
+router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No audio file uploaded' });
+    }
+
+    const transcriber = await getTranscriber();
+    const result = await transcriber(req.file.buffer);
+    const transcription = result?.text?.trim() || '';
+    return res.json({ transcription });
+  } catch (error) {
+    console.error('Transcription error:', error);
+    res.status(500).json({ message: 'Failed to transcribe audio' });
   }
 });
 

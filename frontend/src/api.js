@@ -35,6 +35,9 @@ export const notesAPI = {
   getByBuilding: (buildingId) => api.get(`/notes/building/${buildingId}`),
   createText: (data) => api.post('/notes/text', data),
   createLink: (data) => api.post('/notes/link', data),
+  transcribeVoice: (formData) => api.post('/notes/voice/transcribe', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   createVoice: (formData) => api.post('/notes/voice', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
