@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
 const os = require('os');
+const { FormData, File } = require('undici');
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
 const { openaiApiKey } = require('../config/env');
@@ -150,7 +151,9 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
     return res.json({ transcription });
   } catch (error) {
     console.error('Transcription error:', error);
-    res.status(500).json({ message: 'Failed to transcribe audio' });
+    const status = error.statusCode || 500;
+    const message = error.message || 'Failed to transcribe audio';
+    res.status(status).json({ message });
   }
 });
 
