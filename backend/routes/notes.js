@@ -68,21 +68,19 @@ const memoryUpload = multer({
 
 const getRequestHelpers = async () => {
   let FormDataCtor = globalThis.FormData;
-  let FileCtor = globalThis.File;
   let fetchFn = globalThis.fetch;
 
-  if (!FormDataCtor || !FileCtor || !fetchFn) {
+  if (!FormDataCtor || !fetchFn) {
     if (!undici) {
-      const error = new Error('Transcription requires fetch, FormData, and File (Node 18+ globals or undici package)');
+      const error = new Error('Transcription requires fetch and FormData (Node 18+ globals or undici package)');
       error.statusCode = 503;
       throw error;
     }
     FormDataCtor = FormDataCtor || undici.FormData;
-    FileCtor = FileCtor || undici.File;
     fetchFn = fetchFn || undici.fetch;
   }
 
-  return { FormData: FormDataCtor, File: FileCtor, fetch: fetchFn };
+  return { FormData: FormDataCtor, fetch: fetchFn };
 };
 
 const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
@@ -92,14 +90,13 @@ const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
     throw error;
   }
 
-  const { FormData, File, fetch } = await getRequestHelpers();
+  const { FormData, fetch } = await getRequestHelpers();
 
   const formData = new FormData();
-  const file = new File([buffer], filename || 'audio.webm', {
-    type: mimetype || 'audio/webm'
-  });
-
-  formData.append('file', file);
+  
+  // Use Blob instead of File to avoid experimental API warning
+  const blob = new Blob([buffer], { type: mimetype || 'audio/webm' });
+  formData.append('file', blob, filename || 'audio.webm');
   formData.append('model', 'whisper-1');
 
   const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
