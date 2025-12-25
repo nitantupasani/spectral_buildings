@@ -9,6 +9,10 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [autoProcessing, setAutoProcessing] = useState(false);
+  const [additionalInfo, setAdditionalInfo] = useState('');
+  const additionalInfoRef = useRef('');
+  const [autoTriggered, setAutoTriggered] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
@@ -20,6 +24,73 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     };
   }, [audioUrl]);
 
+  const convertToWav = async (blob) => {
+    const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OfflineCtx) {
+      throw new Error('Offline audio processing is not supported in this browser.');
+    }
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioContext = new AudioContext();
+    try {
+      const decoded = await audioContext.decodeAudioData(arrayBuffer);
+      const targetSampleRate = 16000;
+      const offlineContext = new OfflineCtx(
+        decoded.numberOfChannels,
+        Math.ceil(decoded.duration * targetSampleRate),
+        targetSampleRate
+      );
+      const source = offlineContext.createBufferSource();
+      source.buffer = decoded;
+      source.connect(offlineContext.destination);
+      source.start(0);
+      const resampled = await offlineContext.startRendering();
+
+      const numChannels = resampled.numberOfChannels;
+      const sampleRate = resampled.sampleRate;
+      const samples = resampled.length;
+      const buffer = new ArrayBuffer(44 + samples * numChannels * 2);
+      const view = new DataView(buffer);
+
+      const writeString = (viewRef, offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+          viewRef.setUint8(offset + i, string.charCodeAt(i));
+        }
+      };
+
+      writeString(view, 0, 'RIFF');
+      view.setUint32(4, 36 + samples * numChannels * 2, true);
+      writeString(view, 8, 'WAVE');
+      writeString(view, 12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * numChannels * 2, true);
+      view.setUint16(32, numChannels * 2, true);
+      view.setUint16(34, 16, true);
+      writeString(view, 36, 'data');
+      view.setUint32(40, samples * numChannels * 2, true);
+
+      const interleaved = new Float32Array(samples * numChannels);
+      for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = resampled.getChannelData(channel);
+        for (let i = 0; i < samples; i++) {
+          interleaved[i * numChannels + channel] = channelData[i];
+        }
+      }
+
+      let offset = 44;
+      for (let i = 0; i < interleaved.length; i++, offset += 2) {
+        let sample = Math.max(-1, Math.min(1, interleaved[i]));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      }
+
+      return new Blob([view], { type: 'audio/wav' });
+    } finally {
+      audioContext.close();
+    }
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -30,11 +101,21 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
         audioChunksRef.current.push(event.data);
       };
 
-      mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
-        stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.onstop = async () => {
+        try {
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const wavBlob = await convertToWav(blob);
+          setAudioBlob(wavBlob);
+          setAudioUrl(URL.createObjectURL(wavBlob));
+        } catch (conversionError) {
+          console.error('Audio conversion error:', conversionError);
+          setError('Unable to process the recording. Please try again.');
+          setAudioBlob(null);
+          setAudioUrl(null);
+        } finally {
+          stream.getTracks().forEach(track => track.stop());
+          setAutoTriggered(false);
+        }
       };
 
       mediaRecorderRef.current.start();
@@ -53,54 +134,64 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     }
   };
 
-  const transcribeAudio = async () => {
-    if (!audioBlob) return;
+  const transcribeAudio = async (blob) => {
+    if (!blob) return '';
 
     setIsTranscribing(true);
     setError('');
 
     try {
-      // Using Web Speech API for transcription (browser-based)
-      // Note: This requires browser support. For production, consider using Whisper via backend
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+      const formData = new FormData();
+      formData.append('audio', blob, 'voice-note.wav');
 
-      // For this simple demo, we'll set a placeholder
-      // In production, you'd send the audio to your backend for Whisper processing
-      setTranscription('Transcription will be processed when audio is uploaded...');
-      setIsTranscribing(false);
+      const response = await notesAPI.transcribeVoice(formData);
+      const transcript = response.data.transcription?.trim() || '';
+      setTranscription(transcript);
+      return transcript;
     } catch (err) {
       console.error('Transcription error:', err);
-      setTranscription('Transcription will be processed on upload');
+      setError(err.response?.data?.message || 'Failed to transcribe audio. Uploading without transcription.');
+      return '';
+    } finally {
       setIsTranscribing(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!audioBlob) {
-      setError('Please record audio first');
-      return;
-    }
-
+  const uploadVoiceNote = async (blob, transcript) => {
     setLoading(true);
     setError('');
 
     try {
       const formData = new FormData();
       formData.append('buildingId', buildingId);
-      formData.append('audio', audioBlob, 'voice-note.webm');
-      formData.append('transcription', transcription);
+      formData.append('audio', blob, 'voice-note.wav');
+      formData.append('transcription', transcript);
+      formData.append('content', additionalInfoRef.current || 'Voice note');
 
       const response = await notesAPI.createVoice(formData);
       onVoiceNoteAdded(response.data);
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err.response?.data?.message || 'Failed to upload voice note');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const processRecording = async () => {
+      setAutoProcessing(true);
+      const transcript = await transcribeAudio(audioBlob);
+      await uploadVoiceNote(audioBlob, transcript);
+      setAutoProcessing(false);
+    };
+
+    if (audioBlob && !autoTriggered) {
+      setAutoTriggered(true);
+      processRecording();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioBlob, autoTriggered]);
 
   const handleReset = () => {
     if (audioUrl) {
@@ -109,6 +200,9 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     setAudioBlob(null);
     setAudioUrl(null);
     setTranscription('');
+    setAdditionalInfo('');
+    setAutoProcessing(false);
+    setAutoTriggered(false);
     audioChunksRef.current = [];
   };
 
@@ -155,49 +249,48 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
                 <button
                   className="btn btn-secondary"
                   onClick={handleReset}
+                  disabled={isTranscribing || loading || autoProcessing}
                 >
                   Record Again
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={transcribeAudio}
-                  disabled={isTranscribing}
-                >
-                  {isTranscribing ? 'Transcribing...' : 'Auto Transcribe'}
                 </button>
               </div>
 
               <div className="form-group" style={{ marginTop: '20px', textAlign: 'left' }}>
-                <label>Transcription (Optional)</label>
+                <label>Transcription</label>
                 <textarea
                   className="form-control"
                   rows="4"
                   value={transcription}
-                  onChange={(e) => setTranscription(e.target.value)}
-                  placeholder="Transcription will appear here, or you can type manually..."
+                  readOnly
+                  placeholder="Transcription will appear automatically after recording stops"
                 />
               </div>
+
+              <div className="form-group" style={{ marginTop: '10px', textAlign: 'left' }}>
+                <label>Attachments / Links / Additional Info</label>
+                <textarea
+                  className="form-control"
+                  rows="3"
+                  placeholder="Add links, attachment details, or context to include with the voice note"
+                  value={additionalInfo}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAdditionalInfo(value);
+                    additionalInfoRef.current = value;
+                  }}
+                  disabled={loading}
+                />
+              </div>
+              {(isTranscribing || loading || autoProcessing) && (
+                <div style={{ marginTop: '10px', color: 'var(--secondary-color)' }}>
+                  {isTranscribing ? 'Transcribing...' : 'Uploading voice note...'}
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {error && <div className="error" style={{ textAlign: 'center' }}>{error}</div>}
-
-        {audioBlob && (
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button
-              className="btn btn-success"
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{ flex: 1 }}
-            >
-              {loading ? 'Uploading...' : 'Upload Voice Note'}
-            </button>
-            <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
-              Cancel
-            </button>
-          </div>
-        )}
 
         <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}>
           <strong>Note:</strong> For production use, integrate Whisper.js or send audio to backend for server-side transcription using OpenAI Whisper or similar models.
