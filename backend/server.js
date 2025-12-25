@@ -12,7 +12,11 @@ const noteRoutes = require('./routes/notes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  exposedHeaders: ['Content-Range', 'Content-Length', 'Accept-Ranges']
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
