@@ -5,6 +5,7 @@ const AddBuildingModal = ({ onClose, onBuildingAdded }) => {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
+    client: '',
     description: '',
     status: 'active'
   });
@@ -48,6 +49,15 @@ const AddBuildingModal = ({ onClose, onBuildingAdded }) => {
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               required
+            />
+          </div>
+          <div className="form-group">
+            <label>Client</label>
+            <input
+              type="text"
+              className="form-control"
+              value={formData.client}
+              onChange={(e) => setFormData({ ...formData, client: e.target.value })}
             />
           </div>
           <div className="form-group">

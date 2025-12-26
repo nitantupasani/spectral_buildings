@@ -136,6 +136,40 @@ body {
   gap: 20px;
 }
 
+.building-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.building-toolbar h2 {
+  margin-bottom: 0;
+}
+
+.building-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.building-filters .form-control {
+  width: auto;
+  flex: 1;
+}
+
+.building-filters input.form-control {
+  flex: 2;
+  min-width: 220px;
+}
+
+.building-filters select.form-control {
+  min-width: 180px;
+}
+
 .note-item {
   padding: 12px;
   border-bottom: 1px solid var(--border);
