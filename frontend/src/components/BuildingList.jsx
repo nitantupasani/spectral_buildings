@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { buildingsAPI } from '../api';
 import { AuthContext } from '../AuthContext';
 import AddBuildingModal from './AddBuildingModal';
+import LoadingScreen from './LoadingScreen';
 
 const BuildingList = () => {
   const [buildings, setBuildings] = useState([]);
@@ -65,7 +66,7 @@ const BuildingList = () => {
   }, [buildings, searchTerm, statusFilter, sortOption]);
 
   if (loading) {
-    return <div className="loading">Loading buildings...</div>;
+    return <LoadingScreen message="Mapping your buildings" />;
   }
 
   return (
@@ -126,36 +127,46 @@ const BuildingList = () => {
               to={`/building/${building._id}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <div className="card" style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>
-                <h3 style={{ fontWeight: '700', fontSize: '16px' }}>
+              <div
+                className="card"
+                style={{
+                  cursor: 'pointer',
+                  transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                  background:
+                    'linear-gradient(180deg, rgba(28, 198, 118, 0.08), rgba(5, 8, 7, 0.8))',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <h3 style={{ fontWeight: '700', fontSize: '16px', letterSpacing: '0.02em' }}>
                   📍 {building.address}
                 </h3>
-                <p style={{ marginTop: '4px', fontSize: '14px', color: 'var(--dark)' }}>
+                <p style={{ marginTop: '6px', fontSize: '14px', color: 'var(--muted)' }}>
                   {building.name}
                 </p>
                 {building.client && (
-                  <p style={{ marginTop: '6px', fontSize: '13px', color: 'var(--secondary-color)', fontWeight: 500 }}>
+                  <p style={{ marginTop: '10px', fontSize: '13px', color: 'var(--muted)', fontWeight: 600 }}>
                     Client: {building.client}
                   </p>
                 )}
                 {building.description && (
-                  <p style={{ marginTop: '12px', fontSize: '14px' }}>
+                  <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text)', lineHeight: 1.6 }}>
                     {building.description}
                   </p>
                 )}
                 <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span
                     style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
+                      padding: '6px 12px',
+                      borderRadius: '14px',
                       fontSize: '12px',
-                      backgroundColor: building.status === 'active' ? '#d1fae5' : '#fee2e2',
-                      color: building.status === 'active' ? '#065f46' : '#991b1b'
+                      backgroundColor: building.status === 'active' ? 'rgba(28, 198, 118, 0.16)' : 'rgba(255, 95, 82, 0.16)',
+                      color: building.status === 'active' ? '#9fffc6' : '#ffc6c0',
+                      border: `1px solid ${building.status === 'active' ? 'var(--primary)' : '#ff5f52'}`
                     }}
                   >
                     {building.status}
                   </span>
-                  <span style={{ fontSize: '12px', color: 'var(--secondary-color)' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
                     {new Date(building.onboardedDate).toLocaleDateString()}
                   </span>
                 </div>

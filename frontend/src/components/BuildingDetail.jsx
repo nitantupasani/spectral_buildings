@@ -6,6 +6,7 @@ import AddNoteModal from './AddNoteModal';
 import EditNoteModal from './EditNoteModal';
 import RevisionHistory from './RevisionHistory';
 import VoiceRecorder from './VoiceRecorder';
+import LoadingScreen from './LoadingScreen';
 
 const BuildingDetail = () => {
   const { id } = useParams();
@@ -183,7 +184,7 @@ const BuildingDetail = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <LoadingScreen message="Pulling building intelligence" />;
   }
 
   if (!building) {

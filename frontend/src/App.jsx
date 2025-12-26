@@ -6,12 +6,13 @@ import Login from './components/Login';
 import Register from './components/Register';
 import BuildingList from './components/BuildingList';
 import BuildingDetail from './components/BuildingDetail';
+import LoadingScreen from './components/LoadingScreen';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <LoadingScreen message="Authenticating your workspace" />;
   }
   
   return user ? children : <Navigate to="/login" />;

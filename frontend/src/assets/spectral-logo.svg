@@ -1,0 +1,20 @@
+<svg width="210" height="300" viewBox="0 0 210 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g stroke-linecap="round" stroke-linejoin="round" stroke-width="28">
+    <path d="M165 46C116 16 53 44 53 103C53 162 135 166 163 215C191 264 152 299 103 284C66 273 50 243 50 220" stroke="#84F948"/>
+    <path d="M62 254C111 284 173 256 173 197C173 138 91 134 63 85C35 36 74 1 123 16C160 27 176 57 176 81" stroke="#63D053"/>
+    <path d="M60 221C75 233 91 239 107 239" stroke="#63D053"/>
+    <path d="M71 188C89 198 107 202 124 202" stroke="#84F948"/>
+    <path d="M75 156C92 164 109 166 126 164" stroke="#63D053"/>
+    <path d="M68 122C87 130 105 132 121 131" stroke="#84F948"/>
+    <path d="M65 92C82 97 100 99 117 98" stroke="#63D053"/>
+    <path d="M63 66C83 68 104 67 121 62" stroke="#84F948"/>
+    <path d="M63 48C79 45 95 39 108 32" stroke="#63D053"/>
+    <path d="M153 58C139 56 125 53 112 48" stroke="#84F948"/>
+    <path d="M164 89C150 89 136 87 122 82" stroke="#63D053"/>
+    <path d="M164 117C150 117 135 115 121 111" stroke="#84F948"/>
+    <path d="M168 146C153 147 138 146 123 142" stroke="#63D053"/>
+    <path d="M170 176C155 178 141 177 127 173" stroke="#84F948"/>
+  </g>
+  <text x="105" y="210" text-anchor="middle" fill="#F1FFF2" font-family="'Inter','Segoe UI',sans-serif" font-size="40" font-weight="700" letter-spacing="0.5">Spectral</text>
+  <text x="105" y="238" text-anchor="middle" fill="#E5FFE7" font-family="'Inter','Segoe UI',sans-serif" font-size="16" font-weight="600" letter-spacing="0.8">Real Estate Solutions</text>
+</svg>
