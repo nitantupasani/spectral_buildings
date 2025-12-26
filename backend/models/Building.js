@@ -10,8 +10,7 @@ const buildingSchema = new mongoose.Schema({
     required: true
   },
   client: {
-    type: String,
-    default: ''
+    type: String
   },
   description: {
     type: String
