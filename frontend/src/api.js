@@ -33,7 +33,19 @@ export const buildingsAPI = {
 // Notes API
 export const notesAPI = {
   getByBuilding: (buildingId) => api.get(`/notes/building/${buildingId}`),
-  createText: (data) => api.post('/notes/text', data),
+  createText: (data) => {
+    const formData = data instanceof FormData ? data : new FormData();
+
+    if (!(data instanceof FormData)) {
+      Object.entries(data || {}).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+    }
+
+    return api.post('/notes/text', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
   createLink: (data) => api.post('/notes/link', data),
   transcribeVoice: (formData) => api.post('/notes/voice/transcribe', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
