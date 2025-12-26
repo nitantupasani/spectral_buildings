@@ -18,7 +18,8 @@ api.interceptors.request.use((config) => {
 // Auth API
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData)
+  register: (userData) => api.post('/auth/register', userData),
+  googleLogin: (token) => api.post('/auth/google', token)
 };
 
 // Buildings API

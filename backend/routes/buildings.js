@@ -6,6 +6,13 @@ const adminAuth = require('../middleware/adminAuth');
 
 const router = express.Router();
 
+const blockGoogleDeletion = (req, res, next) => {
+  if (req.user?.authProvider === 'google') {
+    return res.status(403).json({ message: 'Google-based admins cannot delete buildings' });
+  }
+  next();
+};
+
 // Get all buildings
 router.get('/', auth, async (req, res) => {
   try {
@@ -90,8 +97,8 @@ router.put('/:id', [auth, adminAuth], async (req, res) => {
   }
 });
 
-// Delete building (admin only)
-router.delete('/:id', [auth, adminAuth], async (req, res) => {
+// Delete building (admin only) - Google admins are blocked from deletion
+router.delete('/:id', [auth, adminAuth, blockGoogleDeletion], async (req, res) => {
   try {
     const building = await Building.findByIdAndDelete(req.params.id);
 
