@@ -29,14 +29,23 @@ const RevisionHistory = ({ noteId, onClose }) => {
     
     return (
       <div style={{ marginTop: '10px' }}>
-        <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', marginBottom: '8px' }}>
+        <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '8px', letterSpacing: '0.01em' }}>
           Changes: {changes}
         </div>
         
         {changesArray.map((change, idx) => {
           if (change === 'content' && previousValues.content) {
             return (
-              <div key={idx} style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
+              <div
+                key={idx}
+                style={{
+                  marginBottom: '10px',
+                  padding: '10px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border)'
+                }}
+              >
                 <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Previous Content:</div>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{previousValues.content}</div>
               </div>
@@ -44,7 +53,16 @@ const RevisionHistory = ({ noteId, onClose }) => {
           }
           if (change === 'description') {
             return (
-              <div key={idx} style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '6px' }}>
+              <div
+                key={idx}
+                style={{
+                  marginBottom: '10px',
+                  padding: '10px',
+                  background: 'linear-gradient(135deg, rgba(255, 196, 86, 0.14), rgba(28, 198, 118, 0.04))',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border)'
+                }}
+              >
                 <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Previous Description:</div>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{previousValues.description || '(none)'}</div>
               </div>
@@ -52,7 +70,16 @@ const RevisionHistory = ({ noteId, onClose }) => {
           }
           if (change === 'transcription') {
             return (
-              <div key={idx} style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#e0f2fe', borderRadius: '6px' }}>
+              <div
+                key={idx}
+                style={{
+                  marginBottom: '10px',
+                  padding: '10px',
+                  background: 'linear-gradient(135deg, rgba(28, 198, 118, 0.14), rgba(122, 255, 186, 0.08))',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border)'
+                }}
+              >
                 <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Previous Transcription:</div>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{previousValues.transcription || '(none)'}</div>
               </div>
@@ -60,7 +87,16 @@ const RevisionHistory = ({ noteId, onClose }) => {
           }
           if ((change === 'added attachments' || change === 'removed attachments') && previousValues.attachments) {
             return (
-              <div key={idx} style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#fef3c7', borderRadius: '6px' }}>
+              <div
+                key={idx}
+                style={{
+                  marginBottom: '10px',
+                  padding: '10px',
+                  background: 'linear-gradient(135deg, rgba(255, 196, 86, 0.16), rgba(28, 198, 118, 0.05))',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border)'
+                }}
+              >
                 <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
                   Previous Attachments ({previousValues.attachments.length}):
                 </div>
@@ -93,13 +129,13 @@ const RevisionHistory = ({ noteId, onClose }) => {
           {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>}
           
           {error && (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--danger-color)' }}>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--danger)' }}>
               {error}
             </div>
           )}
           
           {!loading && !error && history.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--secondary-color)' }}>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
               No revision history available
             </div>
           )}
@@ -112,9 +148,11 @@ const RevisionHistory = ({ noteId, onClose }) => {
                   style={{
                     padding: '16px',
                     marginBottom: '16px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    backgroundColor: index === 0 ? '#f0fdf4' : 'white'
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    background: 'var(--glass)',
+                    boxShadow: 'var(--shadow)',
+                    borderColor: index === 0 ? 'rgba(28, 198, 118, 0.45)' : 'var(--border)'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -135,7 +173,7 @@ const RevisionHistory = ({ noteId, onClose }) => {
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: '13px', color: 'var(--secondary-color)' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
                       {formatDistanceToNow(new Date(revision.editedAt), { addSuffix: true })}
                     </span>
                   </div>

@@ -254,7 +254,7 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
               <audio controls src={audioUrl} style={{ width: '100%' }} />
               
               <div className="form-group" style={{ marginTop: '20px', textAlign: 'left' }}>
-                <label>Transcription {isTranscribing && <span style={{ color: 'var(--secondary-color)' }}>(Transcribing...)</span>}</label>
+                <label>Transcription {isTranscribing && <span style={{ color: 'var(--muted)' }}>(Transcribing...)</span>}</label>
                 <textarea
                   className="form-control"
                   rows="4"
@@ -295,33 +295,12 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
                 </button>
                 
                 {attachments.length > 0 && (
-                  <div style={{ marginTop: '10px' }}>
+                  <div className="note-attachments-preview" style={{ marginTop: '10px' }}>
                     {attachments.map((file, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px',
-                          backgroundColor: '#f8fafc',
-                          borderRadius: '4px',
-                          marginBottom: '5px'
-                        }}
-                      >
+                      <div key={index} className="note-attachment-chip">
                         <span style={{ fontSize: '14px' }}>📄 {file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeAttachment(index)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--danger-color)',
-                            cursor: 'pointer',
-                            fontSize: '18px'
-                          }}
-                        >
-                          ×
+                        <button type="button" onClick={() => removeAttachment(index)}>
+                          Remove
                         </button>
                       </div>
                     ))}
@@ -351,7 +330,7 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
 
         {error && <div className="error" style={{ textAlign: 'center' }}>{error}</div>}
 
-        <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}>
+        <div className="note-callout muted" style={{ marginTop: '20px', fontSize: '12px' }}>
           <strong>Note:</strong> For production use, integrate Whisper.js or send audio to backend for server-side transcription using OpenAI Whisper or similar models.
         </div>
       </div>

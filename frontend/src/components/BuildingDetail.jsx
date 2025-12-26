@@ -71,116 +71,140 @@ const BuildingDetail = () => {
     }
   };
 
-  const renderNoteContent = (note) => {
-    // Get the API base URL and ensure it's just the domain (no /api suffix)
-    const getApiBaseUrl = () => {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      // Extract just the domain part
-      if (apiUrl.includes('://')) {
-        const url = new URL(apiUrl);
-        return `${url.protocol}//${url.host}`;
-      }
-      return 'http://localhost:5000';
-    };
-    
-    const apiUrl = getApiBaseUrl();
+  // Get the API base URL and ensure it's just the domain (no /api suffix)
+  const getApiBaseUrl = () => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    if (apiUrl.includes('://')) {
+      const url = new URL(apiUrl);
+      return `${url.protocol}//${url.host}`;
+    }
+    return 'http://localhost:5000';
+  };
 
-    const resolveFileUrl = (fileUrl) => {
-      if (!fileUrl) return '';
-      // If the stored URL is already absolute (e.g., older data with localhost),
-      // use it as-is; otherwise prefix with the API host.
-      if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
-        return fileUrl;
-      }
-      return `${apiUrl}${fileUrl}`;
-    };
-    
+  const apiUrl = getApiBaseUrl();
+
+  const resolveFileUrl = (fileUrl) => {
+    if (!fileUrl) return '';
+    if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+      return fileUrl;
+    }
+    return `${apiUrl}${fileUrl}`;
+  };
+
+  const renderAttachments = (note) => {
+    if (!note.attachments || note.attachments.length === 0) return null;
+
+    return (
+      <div className="note-attachments">
+        <div className="note-attachments__header">Attachments</div>
+        <div className="note-attachments__grid">
+          {note.attachments.map((att, idx) => {
+            const isImage = att.mimeType?.startsWith('image/');
+            const isAudio = att.mimeType?.startsWith('audio/');
+            const resolvedUrl = resolveFileUrl(att.fileUrl);
+
+            if (isImage) {
+              return (
+                <button
+                  type="button"
+                  className="note-attachment-card image"
+                  key={`${att.fileUrl}-${idx}`}
+                  onClick={() => setViewingAttachment({ url: resolvedUrl, name: att.originalName, type: 'image' })}
+                >
+                  <img src={resolvedUrl} alt={att.originalName} />
+                  <div className="note-attachment-card__meta">
+                    <span>🖼️ {att.originalName}</span>
+                  </div>
+                </button>
+              );
+            }
+
+            if (isAudio) {
+              return (
+                <div className="note-attachment-card audio" key={`${att.fileUrl}-${idx}`}>
+                  <div className="note-attachment-card__meta">
+                    <span>🎵 {att.originalName}</span>
+                  </div>
+                  <audio controls src={resolvedUrl} crossOrigin="anonymous" />
+                </div>
+              );
+            }
+
+            return (
+              <button
+                type="button"
+                key={`${att.fileUrl}-${idx}`}
+                className="note-attachment-card file"
+                onClick={() => setViewingAttachment({ url: resolvedUrl, name: att.originalName, type: 'document' })}
+              >
+                <div className="note-attachment-card__meta">
+                  <span>📎 {att.originalName}</span>
+                  <span className="note-attachment-card__action">Open</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderNoteContent = (note) => {
+    let contentBlock;
+
     switch (note.type) {
-      case 'text':
-        return <p className="note-content">{note.content}</p>;
-      
       case 'link':
-        return (
+        contentBlock = (
           <a
             href={note.content}
             target="_blank"
             rel="noopener noreferrer"
-            className="note-content"
-            style={{ color: 'var(--primary-color)', textDecoration: 'underline' }}
+            className="note-content note-link"
           >
             {note.content}
           </a>
         );
-      
+        break;
+
       case 'voice':
-        return (
-          <div>
-            <audio controls src={resolveFileUrl(note.fileUrl)} crossOrigin="anonymous" />
+        contentBlock = (
+          <div className="note-stack">
+            <audio controls src={resolveFileUrl(note.fileUrl)} crossOrigin="anonymous" className="note-audio-player" />
             {note.transcription && (
-              <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
-                <strong>Transcription:</strong> {note.transcription}
+              <div className="note-callout">
+                <div className="note-callout__title">Transcription</div>
+                <p className="note-callout__body">{note.transcription}</p>
               </div>
             )}
             {note.description && (
-              <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '6px' }}>
-                <strong>Description:</strong> {note.description}
-              </div>
-            )}
-            {note.attachments && note.attachments.length > 0 && (
-              <div style={{ marginTop: '10px' }}>
-                <strong>Attachments:</strong>
-                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {note.attachments.map((att, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {att.mimeType?.startsWith('image/') ? (
-                          <img 
-                            src={resolveFileUrl(att.fileUrl)} 
-                            alt={att.originalName}
-                            onClick={() => setViewingAttachment({ url: resolveFileUrl(att.fileUrl), name: att.originalName, type: 'image' })}
-                            style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '4px', cursor: 'pointer' }}
-                          />
-                        ) : att.mimeType?.startsWith('audio/') ? (
-                          <div style={{ width: '100%' }}>
-                            <div style={{ fontSize: '13px', marginBottom: '4px', color: 'var(--secondary-color)' }}>
-                              🎵 {att.originalName}
-                            </div>
-                            <audio controls src={resolveFileUrl(att.fileUrl)} crossOrigin="anonymous" style={{ width: '100%' }} />
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setViewingAttachment({ url: resolveFileUrl(att.fileUrl), name: att.originalName, type: 'document' })}
-                            style={{ 
-                              color: 'var(--primary-color)', 
-                              textDecoration: 'underline',
-                              background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                            font: 'inherit'
-                          }}
-                        >
-                          📎 {att.originalName}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+              <div className="note-callout muted">
+                <div className="note-callout__title">Description</div>
+                <p className="note-callout__body">{note.description}</p>
               </div>
             )}
           </div>
         );
-      
+        break;
+
       case 'image':
-        return (
-          <div>
-            <img src={`${apiUrl}${note.fileUrl}`} alt="Note attachment" className="note-image" />
+        contentBlock = (
+          <div className="note-stack">
+            <img src={resolveFileUrl(note.fileUrl)} alt="Note attachment" className="note-image" />
             {note.content !== 'Image attachment' && <p className="note-content">{note.content}</p>}
           </div>
         );
-      
+        break;
+
       default:
-        return <p className="note-content">{note.content}</p>;
+        contentBlock = <p className="note-content">{note.content}</p>;
     }
+
+    return (
+      <>
+        {contentBlock}
+        {renderAttachments(note)}
+      </>
+    );
   };
 
   if (loading) {
@@ -195,7 +219,7 @@ const BuildingDetail = () => {
     <div>
       <div className="card">
         <h2>{building.name}</h2>
-        <p style={{ color: 'var(--secondary-color)', marginTop: '8px' }}>📍 {building.address}</p>
+        <p style={{ color: 'var(--muted)', marginTop: '8px' }}>📍 {building.address}</p>
         {building.description && (
           <p style={{ marginTop: '16px' }}>{building.description}</p>
         )}
@@ -211,7 +235,7 @@ const BuildingDetail = () => {
           >
             {building.status}
           </span>
-          <span style={{ marginLeft: '16px', fontSize: '14px', color: 'var(--secondary-color)' }}>
+          <span style={{ marginLeft: '16px', fontSize: '14px', color: 'var(--muted)' }}>
             Onboarded: {new Date(building.onboardedDate).toLocaleDateString()}
           </span>
         </div>
@@ -231,7 +255,7 @@ const BuildingDetail = () => {
         </div>
 
         {notes.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--secondary-color)', padding: '20px' }}>
+          <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
             No notes yet. Add the first note!
           </p>
         ) : (
@@ -239,20 +263,22 @@ const BuildingDetail = () => {
             {notes.map((note) => (
               <div key={note._id} className="note-item">
                 <div className="note-header">
-                  <div>
+                  <div className="note-header__left">
                     <span className="note-user">{note.user.username}</span>
-                    <span className={`note-type-badge note-type-${note.type}`} style={{ marginLeft: '10px' }}>
-                      {note.type}
-                    </span>
+                    <span className={`note-type-badge note-type-${note.type}`}>{note.type}</span>
                     {note.editedBy && (
-                      <span style={{ marginLeft: '10px', fontSize: '12px', color: 'var(--secondary-color)', fontStyle: 'italic' }}>
+                      <span className="note-edited">
                         (edited by {note.editedBy.username} {formatDistanceToNow(new Date(note.editedAt), { addSuffix: true })})
                       </span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span className="note-time">
-                      {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+                  <div className="note-header__right">
+                    <div className="note-time">
+                      <span>{formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}</span>
+                      <span className="note-timestamp">
+                        {new Date(note.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                      </span>
+                    </div>
                     {note.editHistory && note.editHistory.length > 0 && (
                       <button
                         className="btn btn-secondary"
@@ -262,7 +288,6 @@ const BuildingDetail = () => {
                         View History
                       </button>
                     )}
-                    </span>
                     <button
                       className="btn btn-primary"
                       style={{ padding: '4px 8px', fontSize: '12px' }}

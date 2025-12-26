@@ -12,6 +12,7 @@ const BuildingList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortOption, setSortOption] = useState('name-asc');
+  const [viewMode, setViewMode] = useState('card');
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -73,11 +74,29 @@ const BuildingList = () => {
     <div>
       <div className="building-toolbar">
         <h2>Buildings</h2>
-        {user?.role === 'admin' && (
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            + Add Building
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div className="segmented">
+            <button
+              type="button"
+              className={viewMode === 'card' ? 'segmented__btn active' : 'segmented__btn'}
+              onClick={() => setViewMode('card')}
+            >
+              Cards
+            </button>
+            <button
+              type="button"
+              className={viewMode === 'table' ? 'segmented__btn active' : 'segmented__btn'}
+              onClick={() => setViewMode('table')}
+            >
+              List
+            </button>
+          </div>
+          {user?.role === 'admin' && (
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+              + Add Building
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="building-filters">
@@ -120,60 +139,108 @@ const BuildingList = () => {
           <p>No buildings match your search or filters.</p>
         </div>
       ) : (
-        <div className="grid">
-          {filteredBuildings.map((building) => (
-            <Link
-              key={building._id}
-              to={`/building/${building._id}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              <div
-                className="card"
-                style={{
-                  cursor: 'pointer',
-                  transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-                  background:
-                    'linear-gradient(180deg, rgba(28, 198, 118, 0.08), rgba(5, 8, 7, 0.8))',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <h3 style={{ fontWeight: '700', fontSize: '16px', letterSpacing: '0.02em' }}>
-                  📍 {building.address}
-                </h3>
-                <p style={{ marginTop: '6px', fontSize: '14px', color: 'var(--muted)' }}>
-                  {building.name}
-                </p>
-                {building.client && (
-                  <p style={{ marginTop: '10px', fontSize: '13px', color: 'var(--muted)', fontWeight: 600 }}>
-                    Client: {building.client}
-                  </p>
-                )}
-                {building.description && (
-                  <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text)', lineHeight: 1.6 }}>
-                    {building.description}
-                  </p>
-                )}
-                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span
+        <>
+          {viewMode === 'table' ? (
+            <div className="card building-table">
+              <div className="building-table__header">
+                <div>Name</div>
+                <div>Address</div>
+                <div>Client</div>
+                <div>Status</div>
+                <div>Updated</div>
+              </div>
+              <div className="building-table__body">
+                {filteredBuildings.map((building) => (
+                  <Link
+                    key={building._id}
+                    to={`/building/${building._id}`}
+                    className="building-table__row"
+                  >
+                    <div className="building-table__cell">
+                      <span className="building-name">{building.name || 'Untitled'}</span>
+                    </div>
+                    <div className="building-table__cell">
+                      <div className="building-address">{building.address}</div>
+                    </div>
+                    <div className="building-table__cell">
+                      {building.client ? building.client : <span className="muted">—</span>}
+                    </div>
+                    <div className="building-table__cell">
+                      <span className={`status-pill status-${building.status || 'unknown'}`}>
+                        {getStatusLabel(building.status)}
+                      </span>
+                    </div>
+                    <div className="building-table__cell">
+                      <div className="building-updated">
+                        {building.updatedAt
+                          ? new Date(building.updatedAt).toLocaleString(undefined, {
+                              dateStyle: 'medium',
+                              timeStyle: 'short'
+                            })
+                          : new Date(building.onboardedDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="grid">
+              {filteredBuildings.map((building) => (
+                <Link
+                  key={building._id}
+                  to={`/building/${building._id}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div
+                    className="card"
                     style={{
-                      padding: '6px 12px',
-                      borderRadius: '14px',
-                      fontSize: '12px',
-                      backgroundColor: building.status === 'active' ? 'rgba(28, 198, 118, 0.16)' : 'rgba(255, 95, 82, 0.16)',
-                      color: building.status === 'active' ? '#9fffc6' : '#ffc6c0',
-                      border: `1px solid ${building.status === 'active' ? 'var(--primary)' : '#ff5f52'}`
+                      cursor: 'pointer',
+                      transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                      background:
+                        'linear-gradient(180deg, rgba(28, 198, 118, 0.08), rgba(5, 8, 7, 0.8))',
+                      border: '1px solid var(--border)',
                     }}
                   >
-                    {building.status}
-                  </span>
-                  <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                    {new Date(building.onboardedDate).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                    <h3 style={{ fontWeight: '700', fontSize: '16px', letterSpacing: '0.02em' }}>
+                      📍 {building.address}
+                    </h3>
+                    <p style={{ marginTop: '6px', fontSize: '14px', color: 'var(--muted)' }}>
+                      {building.name}
+                    </p>
+                    {building.client && (
+                      <p style={{ marginTop: '10px', fontSize: '13px', color: 'var(--muted)', fontWeight: 600 }}>
+                        Client: {building.client}
+                      </p>
+                    )}
+                    {building.description && (
+                      <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text)', lineHeight: 1.6 }}>
+                        {building.description}
+                      </p>
+                    )}
+                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '14px',
+                          fontSize: '12px',
+                          backgroundColor: building.status === 'active' ? 'rgba(28, 198, 118, 0.16)' : 'rgba(255, 95, 82, 0.16)',
+                          color: building.status === 'active' ? '#9fffc6' : '#ffc6c0',
+                          border: `1px solid ${building.status === 'active' ? 'var(--primary)' : '#ff5f52'}`
+                        }}
+                      >
+                        {building.status}
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                        {new Date(building.onboardedDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {showModal && (

@@ -9,6 +9,10 @@ const buildingSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  client: {
+    type: String,
+    default: ''
+  },
   description: {
     type: String
   },
@@ -25,11 +29,7 @@ const buildingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Building', buildingSchema);
