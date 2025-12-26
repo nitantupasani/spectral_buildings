@@ -90,10 +90,11 @@ PORT=5000
 VITE_API_URL=http://localhost:5000/api
 
 # Google Login (optional)
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
-VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
-# Comma-separated allowlist of specific @spectral.energy accounts. Leave empty to allow any @spectral.energy user.
-ALLOWED_GOOGLE_EMAILS=alice@spectral.energy,bob@spectral.energy
+# Use the OAuth 2.0 Web client ID from Google Cloud Console → Credentials
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
+# Comma-separated allowlist of specific @spectral.energy accounts (lowercase)
+ALLOWED_GOOGLE_EMAILS=nitant@spectral.energy,adam@spectral.energy,martijn@spectral.energy,norbert@spectral.energy
 ```
 
 ### 4. Start MongoDB
