@@ -84,7 +84,7 @@ const EditNoteModal = ({ note, onClose, onNoteUpdated }) => {
                   onChange={(e) => setContent(e.target.value)}
                   required
                   rows="4"
-                  style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                  className="form-control"
                 />
               </div>
             )}
@@ -97,7 +97,7 @@ const EditNoteModal = ({ note, onClose, onNoteUpdated }) => {
                     value={transcription}
                     onChange={(e) => setTranscription(e.target.value)}
                     rows="3"
-                    style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    className="form-control"
                   />
                 </div>
                 <div className="form-group">
@@ -106,108 +106,75 @@ const EditNoteModal = ({ note, onClose, onNoteUpdated }) => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows="3"
-                    style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    className="form-control"
                   />
                 </div>
 
-                {/* Existing Attachments */}
-                {attachments.length > 0 && (
-                  <div className="form-group">
-                    <label>Current Attachments</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                      {attachments.map((att, idx) => (
-                        <div key={idx} style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '8px',
-                          padding: '8px',
-                          backgroundColor: '#f8fafc',
-                          borderRadius: '6px'
-                        }}>
-                          <span style={{ flex: 1, fontSize: '14px' }}>{att.originalName}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeExistingAttachment(att.filename)}
-                            style={{
-                              padding: '4px 8px',
-                              backgroundColor: '#ef4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px'
-                            }}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* New Attachments */}
-                <div className="form-group">
-                  <label>Add Attachments (Images, Audio, Documents)</label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileSelect}
-                    multiple
-                    accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt"
-                    style={{ display: 'none' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="btn btn-secondary"
-                    style={{ width: '100%', marginTop: '8px' }}
-                  >
-                    📎 Choose Files
-                  </button>
-                  
-                  {newFiles.length > 0 && (
-                    <div style={{ marginTop: '12px' }}>
-                      {newFiles.map((file, idx) => (
-                        <div key={idx} style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '8px',
-                          padding: '8px',
-                          marginBottom: '8px',
-                          backgroundColor: '#e0f2fe',
-                          borderRadius: '6px'
-                        }}>
-                          <span style={{ flex: 1, fontSize: '14px' }}>
-                            {file.type.startsWith('audio/') ? '🎵 ' : '📎 '}
-                            {file.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeNewFile(idx)}
-                            style={{
-                              padding: '4px 8px',
-                              backgroundColor: '#ef4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px'
-                            }}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </>
             )}
 
+            {note.type !== 'image' && (
+              <div className="form-group">
+                <label>Attachments</label>
+
+                {attachments.length > 0 && (
+                  <div className="note-attachments-preview">
+                    {attachments.map((att, idx) => (
+                      <div key={att.filename || idx} className="note-attachment-chip">
+                        <span style={{ flex: 1, fontSize: '14px' }}>
+                          {att.mimeType?.startsWith('audio/') ? '🎵 ' : att.mimeType?.startsWith('image/') ? '🖼️ ' : '📎 '}
+                          {att.originalName}
+                        </span>
+                        <button type="button" onClick={() => removeExistingAttachment(att.filename)}>
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  multiple
+                  accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt"
+                  style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', marginTop: '12px' }}
+                >
+                  📎 Add files
+                </button>
+
+                {newFiles.length > 0 && (
+                  <div className="note-attachments-preview" style={{ marginTop: '12px' }}>
+                    {newFiles.map((file, idx) => (
+                      <div key={`${file.name}-${idx}`} className="note-attachment-chip">
+                        <span style={{ flex: 1, fontSize: '14px' }}>
+                          {file.type.startsWith('audio/') ? '🎵 ' : file.type.startsWith('image/') ? '🖼️ ' : '📎 '}
+                          {file.name}
+                        </span>
+                        <button type="button" onClick={() => removeNewFile(idx)}>
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p style={{ color: 'var(--muted)', fontSize: '12px', marginTop: '10px' }}>
+                  Attach images, audio clips, or documents. Existing files can be removed above.
+                </p>
+              </div>
+            )}
+
             {note.type === 'image' && (
-              <div style={{ padding: '10px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
-                <p style={{ color: 'var(--secondary-color)', margin: 0 }}>
+              <div className="note-callout muted">
+                <p style={{ color: 'var(--text)', margin: 0 }}>
                   Image notes cannot be edited. You can delete and create a new one if needed.
                 </p>
               </div>

@@ -128,35 +128,66 @@ router.get('/building/:buildingId', auth, async (req, res) => {
   }
 });
 
-// Create text note
-router.post('/text', [auth, [
-  body('buildingId').notEmpty(),
-  body('content').notEmpty()
-]], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+// Create text note (supports optional attachments)
+router.post('/text',
+  auth,
+  upload.array('attachments', 10),
+  [
+    body('buildingId').notEmpty(),
+    body('content').notEmpty()
+  ],
+  async (req, res) => {
+    let noteCreated = false;
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        if (req.files && req.files.length > 0) {
+          req.files.forEach(file => {
+            const filePath = path.join(uploadsDir, file.filename);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          });
+        }
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { buildingId, content } = req.body;
+      const attachmentFiles = req.files || [];
+
+      const attachments = attachmentFiles.map(file => ({
+        filename: file.filename,
+        originalName: file.originalname,
+        fileUrl: `/uploads/${file.filename}`,
+        mimeType: file.mimetype
+      }));
+
+      const note = new Note({
+        building: buildingId,
+        user: req.user.userId,
+        type: 'text',
+        content,
+        attachments
+      });
+
+      await note.save();
+      await note.populate('user', 'username email');
+      noteCreated = true;
+
+      res.status(201).json(note);
+    } catch (error) {
+      console.error(error);
+      if (!noteCreated && req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          const filePath = path.join(uploadsDir, file.filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        });
+      }
+      res.status(500).json({ message: 'Server error' });
     }
-
-    const { buildingId, content } = req.body;
-
-    const note = new Note({
-      building: buildingId,
-      user: req.user.userId,
-      type: 'text',
-      content
-    });
-
-    await note.save();
-    await note.populate('user', 'username email');
-
-    res.status(201).json(note);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+  });
 
 // Transcribe voice note using OpenAI Whisper API
 router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (req, res) => {
