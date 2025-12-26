@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
 import { authAPI } from '../api';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -38,21 +39,31 @@ const Login = () => {
         </div>
         <div className="form-group">
           <label>Password</label>
-          <input
-            type="password"
-            className="form-control"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required
-          />
+          <div className="input-with-action">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              className="form-control"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+            />
+            <button
+              type="button"
+              className="ghost-action"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
         </div>
         {error && <div className="error">{error}</div>}
         <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
           Login
         </button>
       </form>
-      <p style={{ marginTop: '20px', textAlign: 'center' }}>
-        Don't have an account? <Link to="/register">Register</Link>
+      <p style={{ marginTop: '16px', textAlign: 'center', color: 'var(--muted)' }}>
+        New accounts are currently created by administrators. Please contact your admin team for access.
       </p>
     </div>
   );
