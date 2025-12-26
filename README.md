@@ -88,6 +88,13 @@ PORT=5000
 
 # Frontend API URL
 VITE_API_URL=http://localhost:5000/api
+
+# Google Login (optional)
+# Use the OAuth 2.0 Web client ID from Google Cloud Console → Credentials
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
+# Comma-separated allowlist of specific @spectral.energy accounts (lowercase)
+ALLOWED_GOOGLE_EMAILS=nitant@spectral.energy,adam@spectral.energy,martijn@spectral.energy,norbert@spectral.energy
 ```
 
 ### 4. Start MongoDB
@@ -147,7 +154,7 @@ The repository includes a `netlify.toml` that points Netlify at the `frontend` w
 ### Admin Role
 - Add new buildings
 - Edit building information
-- Delete buildings
+- Delete buildings (local admins only; Google-authenticated admins cannot delete buildings)
 - Add all types of notes
 - Delete notes
 

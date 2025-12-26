@@ -16,12 +16,23 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required() {
+      return this.authProvider !== 'google';
+    }
   },
   role: {
     type: String,
     enum: ['admin', 'engineer'],
     default: 'engineer'
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
+  googleId: {
+    type: String,
+    index: true
   },
   createdAt: {
     type: Date,
