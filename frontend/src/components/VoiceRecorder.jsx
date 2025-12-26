@@ -330,8 +330,8 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
 
         {error && <div className="error" style={{ textAlign: 'center' }}>{error}</div>}
 
-        <div className="note-callout muted" style={{ marginTop: '20px', fontSize: '12px' }}>
-          <strong>Note:</strong> For production use, integrate Whisper.js or send audio to backend for server-side transcription using OpenAI Whisper or similar models.
+        <div style={{ marginTop: '20px', padding: '10px', background: 'var(--panel)', borderRadius: '8px', fontSize: '13px', color: 'var(--text)', border: '1px solid var(--border)' }}>
+          <strong style={{ color: 'var(--primary)' }}>Note:</strong> For production use, integrate Whisper.js or send audio to backend for server-side transcription using OpenAI Whisper or similar models.
         </div>
       </div>
     </div>

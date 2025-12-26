@@ -45,6 +45,7 @@ const seedDatabase = async () => {
       {
         name: 'Spectral Tower A',
         address: '123 Tech Street, San Francisco, CA 94105',
+        client: 'Spectral Inc.',
         description: 'Main headquarters building with smart climate control',
         status: 'active',
         createdBy: adminUser._id
@@ -52,6 +53,7 @@ const seedDatabase = async () => {
       {
         name: 'Innovation Center',
         address: '456 Innovation Blvd, Palo Alto, CA 94301',
+        client: 'Spectral Inc.',
         description: 'Research and development facility',
         status: 'active',
         createdBy: adminUser._id
@@ -59,6 +61,7 @@ const seedDatabase = async () => {
       {
         name: 'Data Center East',
         address: '789 Server Lane, Austin, TX 78701',
+        client: 'TechCorp Solutions',
         description: 'Primary data center with advanced cooling systems',
         status: 'maintenance',
         createdBy: adminUser._id
@@ -66,6 +69,7 @@ const seedDatabase = async () => {
       {
         name: 'Green Energy Hub',
         address: '12 Solar Way, Denver, CO 80202',
+        client: 'Green Future LLC',
         description: 'Pilot site for renewable microgrid integration',
         status: 'active',
         createdBy: engineerUser._id
@@ -73,6 +77,7 @@ const seedDatabase = async () => {
       {
         name: 'Logistics Operations Center',
         address: '240 Warehouse Ave, Dallas, TX 75201',
+        client: 'Global Logistics Corp',
         description: 'Logistics hub with loading bay HVAC modernization',
         status: 'inactive',
         createdBy: engineerUser._id
