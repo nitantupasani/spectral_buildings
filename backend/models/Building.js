@@ -9,6 +9,9 @@ const buildingSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  client: {
+    type: String
+  },
   description: {
     type: String
   },
