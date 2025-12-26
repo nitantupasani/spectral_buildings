@@ -47,12 +47,13 @@ router.post('/', [auth, adminAuth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, address, description, status } = req.body;
+    const { name, address, description, status, client } = req.body;
 
     const building = new Building({
       name,
       address,
       description,
+      client,
       status,
       createdBy: req.user.userId
     });
@@ -70,11 +71,11 @@ router.post('/', [auth, adminAuth, [
 // Update building (admin only)
 router.put('/:id', [auth, adminAuth], async (req, res) => {
   try {
-    const { name, address, description, status } = req.body;
+    const { name, address, description, status, client } = req.body;
 
     const building = await Building.findByIdAndUpdate(
       req.params.id,
-      { name, address, description, status },
+      { name, address, description, status, client },
       { new: true }
     ).populate('createdBy', 'username email');
 
