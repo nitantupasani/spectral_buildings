@@ -164,6 +164,7 @@ router.post('/google', [
     }
 
     let user = await User.findOne({ email });
+    let needsSave = false;
 
     if (!user) {
       const baseUsername = name || email.split('@')[0];
@@ -181,15 +182,26 @@ router.post('/google', [
         authProvider: 'google',
         googleId
       });
+      needsSave = true;
+    } else {
+      if (user.authProvider !== 'google') {
+        user.authProvider = 'google';
+        needsSave = true;
+      }
 
-      await user.save();
-    } else if (user.authProvider !== 'google') {
-      return res.status(400).json({ message: 'Use email/password to login' });
+      if (!user.googleId) {
+        user.googleId = googleId;
+        needsSave = true;
+      }
     }
 
     // Ensure Google users are treated as admins (per requirements)
     if (user.role !== 'admin') {
       user.role = 'admin';
+      needsSave = true;
+    }
+
+    if (needsSave) {
       await user.save();
     }
 
