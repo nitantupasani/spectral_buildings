@@ -114,10 +114,30 @@ const transcribeWithOpenAI = async (buffer, filename, mimetype) => {
   return data?.text?.trim() || '';
 };
 
+const isValidChannel = (channel) => ['general', 'onboarding', 'duty', 'mapping'].includes(channel);
+
 // Get all notes for a building
 router.get('/building/:buildingId', auth, async (req, res) => {
   try {
     const notes = await Note.find({ building: req.params.buildingId })
+      .populate('user', 'username email')
+      .populate('editedBy', 'username')
+      .sort({ createdAt: -1 });
+    res.json(notes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all notes for a channel feed
+router.get('/channel/:channel', auth, async (req, res) => {
+  try {
+    const { channel } = req.params;
+    if (!isValidChannel(channel)) {
+      return res.status(400).json({ message: 'Invalid channel' });
+    }
+    const notes = await Note.find({ channel })
       .populate('user', 'username email')
       .populate('editedBy', 'username')
       .sort({ createdAt: -1 });
@@ -133,8 +153,10 @@ router.post('/text',
   auth,
   upload.array('attachments', 10),
   [
-    body('buildingId').notEmpty(),
-    body('content').notEmpty()
+    body('content').notEmpty(),
+    body().custom((body) => body.buildingId || body.channel)
+      .withMessage('buildingId or channel is required'),
+    body('channel').optional().custom(isValidChannel).withMessage('Invalid channel')
   ],
   async (req, res) => {
     let noteCreated = false;
@@ -152,7 +174,7 @@ router.post('/text',
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { buildingId, content } = req.body;
+      const { buildingId, content, channel } = req.body;
       const attachmentFiles = req.files || [];
 
       const attachments = attachmentFiles.map(file => ({
@@ -163,7 +185,8 @@ router.post('/text',
       }));
 
       const note = new Note({
-        building: buildingId,
+        building: buildingId || undefined,
+        channel: channel || undefined,
         user: req.user.userId,
         type: 'text',
         content,
@@ -213,8 +236,10 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
 
 // Create link note
 router.post('/link', [auth, [
-  body('buildingId').notEmpty(),
-  body('content').isURL()
+  body('content').isURL(),
+  body().custom((body) => body.buildingId || body.channel)
+    .withMessage('buildingId or channel is required'),
+  body('channel').optional().custom(isValidChannel).withMessage('Invalid channel')
 ]], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -222,10 +247,11 @@ router.post('/link', [auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { buildingId, content } = req.body;
+    const { buildingId, content, channel } = req.body;
 
     const note = new Note({
-      building: buildingId,
+      building: buildingId || undefined,
+      channel: channel || undefined,
       user: req.user.userId,
       type: 'link',
       content
@@ -251,7 +277,13 @@ router.post('/voice', [auth, upload.fields([
       return res.status(400).json({ message: 'No audio file uploaded' });
     }
 
-    const { buildingId, transcription, description } = req.body;
+    const { buildingId, transcription, description, channel } = req.body;
+    if (!buildingId && !channel) {
+      return res.status(400).json({ message: 'buildingId or channel is required' });
+    }
+    if (channel && !isValidChannel(channel)) {
+      return res.status(400).json({ message: 'Invalid channel' });
+    }
     const audioFile = req.files.audio[0];
     const attachmentFiles = req.files.attachments || [];
 
@@ -282,7 +314,8 @@ router.post('/voice', [auth, upload.fields([
 
     // Create voice note with attachments
     const note = new Note({
-      building: buildingId,
+      building: buildingId || undefined,
+      channel: channel || undefined,
       user: req.user.userId,
       type: 'voice',
       content: finalTranscription || 'Voice note',
@@ -309,10 +342,17 @@ router.post('/image', [auth, upload.single('image')], async (req, res) => {
       return res.status(400).json({ message: 'No image file uploaded' });
     }
 
-    const { buildingId, content } = req.body;
+    const { buildingId, content, channel } = req.body;
+    if (!buildingId && !channel) {
+      return res.status(400).json({ message: 'buildingId or channel is required' });
+    }
+    if (channel && !isValidChannel(channel)) {
+      return res.status(400).json({ message: 'Invalid channel' });
+    }
 
     const note = new Note({
-      building: buildingId,
+      building: buildingId || undefined,
+      channel: channel || undefined,
       user: req.user.userId,
       type: 'image',
       content: content || 'Image attachment',

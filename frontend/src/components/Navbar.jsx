@@ -18,11 +18,17 @@ const Navbar = () => {
         <Link to="/" style={{ textDecoration: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <img src={logo} alt="Spectral Real Estate Solutions" style={{ width: '46px', height: 'auto' }} />
           <div>
-            <h1 style={{ margin: 0 }}>Spectral Buildings</h1>
-            <div style={{ fontSize: '12px', color: 'var(--muted)', letterSpacing: '0.08em' }}>Real Estate Solutions</div>
+            <h1 style={{ margin: 0 }}>Brighter Control Knowledge Hub</h1>
+            <div style={{ fontSize: '12px', color: 'var(--muted)', letterSpacing: '0.08em' }}>Team-wide knowledge sharing & duty coordination</div>
           </div>
         </Link>
         <div className="navbar-links">
+          {user && (
+            <>
+              <Link to="/" className="nav-ghost-link">Knowledge</Link>
+              <Link to="/buildings" className="nav-ghost-link">Buildings</Link>
+            </>
+          )}
           {user ? (
             <>
               <span>Welcome, {user.username} ({user.role})</span>

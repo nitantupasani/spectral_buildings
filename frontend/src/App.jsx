@@ -7,6 +7,7 @@ import Register from './components/Register';
 import BuildingList from './components/BuildingList';
 import BuildingDetail from './components/BuildingDetail';
 import LoadingScreen from './components/LoadingScreen';
+import KnowledgeHub from './components/KnowledgeHub';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
@@ -30,6 +31,14 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route
                 path="/"
+                element={
+                  <PrivateRoute>
+                    <KnowledgeHub />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/buildings"
                 element={
                   <PrivateRoute>
                     <BuildingList />
