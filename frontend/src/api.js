@@ -34,6 +34,7 @@ export const buildingsAPI = {
 // Notes API
 export const notesAPI = {
   getByBuilding: (buildingId) => api.get(`/notes/building/${buildingId}`),
+  getByChannel: (channel) => api.get(`/notes/channel/${channel}`),
   createText: (data) => {
     const formData = data instanceof FormData ? data : new FormData();
 

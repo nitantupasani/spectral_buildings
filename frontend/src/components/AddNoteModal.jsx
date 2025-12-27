@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { notesAPI } from '../api';
 
-const AddNoteModal = ({ buildingId, onClose, onNoteAdded }) => {
+const AddNoteModal = ({ buildingId, channel, onClose, onNoteAdded }) => {
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [error, setError] = useState('');
@@ -23,8 +23,13 @@ const AddNoteModal = ({ buildingId, onClose, onNoteAdded }) => {
     setLoading(true);
 
     try {
+      if (!buildingId && !channel) {
+        throw new Error('A building or channel is required to post a note.');
+      }
+
       const formData = new FormData();
-      formData.append('buildingId', buildingId);
+      if (buildingId) formData.append('buildingId', buildingId);
+      if (channel) formData.append('channel', channel);
       formData.append('content', content);
 
       attachments.forEach((file) => formData.append('attachments', file));
@@ -34,7 +39,7 @@ const AddNoteModal = ({ buildingId, onClose, onNoteAdded }) => {
       setContent('');
       setAttachments([]);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add note');
+      setError(err.response?.data?.message || err.message || 'Failed to add note');
     } finally {
       setLoading(false);
     }
@@ -44,7 +49,10 @@ const AddNoteModal = ({ buildingId, onClose, onNoteAdded }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add Note</h2>
+          <h2>
+            Add Note
+            {channel && <span style={{ fontSize: '14px', color: 'var(--muted)', marginLeft: '6px' }}>to {channel} feed</span>}
+          </h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -56,7 +64,11 @@ const AddNoteModal = ({ buildingId, onClose, onNoteAdded }) => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               required
-              placeholder="Share updates, decisions, or links for this building..."
+              placeholder={
+                channel
+                  ? 'Share updates, decisions, or links for the Brighter Control team...'
+                  : 'Share updates, decisions, or links for this building...'
+              }
             />
           </div>
 

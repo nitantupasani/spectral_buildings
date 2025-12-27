@@ -123,6 +123,24 @@ const seedDatabase = async () => {
         user: adminUser._id,
         type: 'text',
         content: 'Loading bay HVAC survey complete; awaiting parts list.'
+      },
+      {
+        channel: 'general',
+        user: adminUser._id,
+        type: 'text',
+        content: 'Welcome to the Brighter Control knowledge hub. Share announcements here.'
+      },
+      {
+        channel: 'onboarding',
+        user: engineerUser._id,
+        type: 'text',
+        content: 'Mapping checklist: label risers, capture controller IPs, upload floor plans.'
+      },
+      {
+        channel: 'duty',
+        user: adminUser._id,
+        type: 'text',
+        content: 'Duty log: Night shift handed over to Day shift at 07:00 with no escalations.'
       }
     ]);
     console.log(`✅ Created ${notes.length} sample notes`);

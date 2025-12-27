@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { notesAPI } from '../api';
 
-const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
+const VoiceRecorder = ({ buildingId, channel, onClose, onVoiceNoteAdded }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -175,12 +175,18 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
       return;
     }
 
+    if (!buildingId && !channel) {
+      setError('A building or channel is required.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const formData = new FormData();
-      formData.append('buildingId', buildingId);
+      if (buildingId) formData.append('buildingId', buildingId);
+      if (channel) formData.append('channel', channel);
       const extension = audioBlob?.type === 'audio/wav' ? 'wav' : 'webm';
       formData.append('audio', audioBlob, `voice-note.${extension}`);
       formData.append('transcription', transcription);
@@ -218,7 +224,14 @@ const VoiceRecorder = ({ buildingId, onClose, onVoiceNoteAdded }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>🎤 Record Voice Note</h2>
+          <h2>
+            🎤 Record Voice Note
+            {channel && (
+              <span style={{ fontSize: '14px', color: 'var(--muted)', marginLeft: '6px' }}>
+                for {channel} feed
+              </span>
+            )}
+          </h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
 
