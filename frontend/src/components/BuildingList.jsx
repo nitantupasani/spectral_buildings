@@ -193,14 +193,7 @@ const BuildingList = () => {
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   <div
-                    className="card"
-                    style={{
-                      cursor: 'pointer',
-                      transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-                      background:
-                        'linear-gradient(180deg, rgba(28, 198, 118, 0.08), rgba(5, 8, 7, 0.8))',
-                      border: '1px solid var(--border)',
-                    }}
+                    className="card building-card"
                   >
                     <h3 style={{ fontWeight: '600', fontSize: '14px', letterSpacing: '0.01em', marginBottom: 2 }}>
                       📍 {building.address}
