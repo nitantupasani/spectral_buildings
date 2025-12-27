@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { notesAPI } from '../api';
 
 const VoiceRecorder = ({ buildingId, channel, onClose, onVoiceNoteAdded }) => {
+  const [title, setTitle] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -175,6 +176,11 @@ const VoiceRecorder = ({ buildingId, channel, onClose, onVoiceNoteAdded }) => {
       return;
     }
 
+    if (!title.trim()) {
+      setError('Please enter a title for this voice note.');
+      return;
+    }
+
     if (!buildingId && !channel) {
       setError('A building or channel is required.');
       return;
@@ -187,6 +193,7 @@ const VoiceRecorder = ({ buildingId, channel, onClose, onVoiceNoteAdded }) => {
       const formData = new FormData();
       if (buildingId) formData.append('buildingId', buildingId);
       if (channel) formData.append('channel', channel);
+      formData.append('title', title.trim());
       const extension = audioBlob?.type === 'audio/wav' ? 'wav' : 'webm';
       formData.append('audio', audioBlob, `voice-note.${extension}`);
       formData.append('transcription', transcription);
@@ -217,6 +224,7 @@ const VoiceRecorder = ({ buildingId, channel, onClose, onVoiceNoteAdded }) => {
     setTranscription('');
     setDescription('');
     setAttachments([]);
+    setTitle('');
     audioChunksRef.current = [];
   };
 
@@ -233,6 +241,18 @@ const VoiceRecorder = ({ buildingId, channel, onClose, onVoiceNoteAdded }) => {
             )}
           </h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
+        </div>
+
+        <div className="form-group">
+          <label>Title</label>
+          <input
+            type="text"
+            className="form-control"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Add a short title for this voice note"
+            required
+          />
         </div>
 
         <div style={{ textAlign: 'center', padding: '20px' }}>

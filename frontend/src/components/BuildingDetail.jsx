@@ -18,6 +18,7 @@ const BuildingDetail = () => {
   const [viewingAttachment, setViewingAttachment] = useState(null);
   const [editingNote, setEditingNote] = useState(null);
   const [viewingHistory, setViewingHistory] = useState(null);
+  const [expandedNotes, setExpandedNotes] = useState(new Set());
 
   useEffect(() => {
     fetchBuilding();
@@ -254,57 +255,93 @@ const BuildingDetail = () => {
           </div>
         </div>
 
+        <div className="summary-card">
+          <div className="summary-card__header">
+            <div>
+              <div className="eyebrow">Summary</div>
+              <p className="summary-card__body">Add the latest status or building overview here.</p>
+            </div>
+          </div>
+        </div>
+
         {notes.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
             No notes yet. Add the first note!
           </p>
         ) : (
-          <div>
+          <div className="note-tiles">
             {notes.map((note) => (
-              <div key={note._id} className="note-item">
-                <div className="note-header">
-                  <div className="note-header__left">
-                    <span className="note-user">{note.user.username}</span>
-                    <span className={`note-type-badge note-type-${note.type}`}>{note.type}</span>
-                    {note.editedBy && (
-                      <span className="note-edited">
-                        (edited by {note.editedBy.username} {formatDistanceToNow(new Date(note.editedAt), { addSuffix: true })})
-                      </span>
-                    )}
-                  </div>
-                  <div className="note-header__right">
-                    <div className="note-time">
-                      <span>{formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}</span>
+              <div key={note._id} className={`note-tile ${expandedNotes.has(note._id) ? 'expanded' : ''}`}>
+                <button
+                  type="button"
+                  className="note-tile__header"
+                  onClick={() => {
+                    setExpandedNotes((prev) => {
+                      const next = new Set(prev);
+                      next.has(note._id) ? next.delete(note._id) : next.add(note._id);
+                      return next;
+                    });
+                  }}
+                >
+                  <div className="note-tile__title-row">
+                    <div className="note-tile__title">{note.title || 'Untitled post'}</div>
+                    <div className="note-tile__meta">
+                      <span className="note-user">{note.user.username}</span>
+                      <span className="note-dot">•</span>
                       <span className="note-timestamp">
-                        {new Date(note.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                        {new Date(note.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
                       </span>
                     </div>
-                    {note.editHistory && note.editHistory.length > 0 && (
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '4px 8px', fontSize: '12px' }}
-                        onClick={() => setViewingHistory(note._id)}
-                      >
-                        View History
-                      </button>
-                    )}
-                    <button
-                      className="btn btn-primary"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
-                      onClick={() => setEditingNote(note)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
-                      onClick={() => handleDeleteNote(note._id)}
-                    >
-                      Delete
-                    </button>
                   </div>
-                </div>
-                {renderNoteContent(note)}
+                  <div className="note-tile__badges">
+                    <span className={`note-type-badge note-type-${note.type}`}>{note.type}</span>
+                    <span className="note-time-compact">
+                      {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+                    </span>
+                  </div>
+                </button>
+
+                {expandedNotes.has(note._id) && (
+                  <div className="note-tile__body">
+                    <div className="note-tile__toolbar">
+                      {note.editHistory && note.editHistory.length > 0 && (
+                        <button
+                          className="btn btn-secondary btn-compact"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingHistory(note._id);
+                          }}
+                        >
+                          View History
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-primary btn-compact"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingNote(note);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-danger btn-compact"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteNote(note._id);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    {note.editedBy && (
+                      <div className="note-edited">
+                        Edited by {note.editedBy.username} {formatDistanceToNow(new Date(note.editedAt), { addSuffix: true })}
+                      </div>
+                    )}
+                    {renderNoteContent(note)}
+                  </div>
+                )}
               </div>
             ))}
           </div>

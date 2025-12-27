@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { notesAPI } from '../api';
 
 const AddNoteModal = ({ buildingId, channel, onClose, onNoteAdded }) => {
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [error, setError] = useState('');
@@ -30,12 +31,14 @@ const AddNoteModal = ({ buildingId, channel, onClose, onNoteAdded }) => {
       const formData = new FormData();
       if (buildingId) formData.append('buildingId', buildingId);
       if (channel) formData.append('channel', channel);
+      formData.append('title', title);
       formData.append('content', content);
 
       attachments.forEach((file) => formData.append('attachments', file));
 
       const response = await notesAPI.createText(formData);
       onNoteAdded(response.data);
+      setTitle('');
       setContent('');
       setAttachments([]);
     } catch (err) {
@@ -56,6 +59,18 @@ const AddNoteModal = ({ buildingId, channel, onClose, onNoteAdded }) => {
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Title</label>
+            <input
+              type="text"
+              className="form-control"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              placeholder="Give this post a clear title"
+            />
+          </div>
+
           <div className="form-group">
             <label>Note</label>
             <textarea

@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const noteSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 140
+  },
   building: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Building'
@@ -56,6 +62,7 @@ const noteSchema = new mongoose.Schema({
     },
     changes: String,
     previousValues: {
+      title: String,
       content: String,
       description: String,
       transcription: String,
