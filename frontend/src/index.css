@@ -140,6 +140,19 @@ body {
 .btn-link-add:hover {
   background: var(--primary-strong);
 }
+
+:root.theme-light .btn-link-add,
+[data-theme="light"] .btn-link-add {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  box-shadow: none;
+}
+
+:root.theme-light .btn-link-add:hover,
+[data-theme="light"] .btn-link-add:hover {
+  background: var(--primary-soft);
+}
 .important-links-form {
   display: flex;
   flex-direction: column;
@@ -302,6 +315,34 @@ body {
   background: linear-gradient(135deg, #2fcb8c, #5b7cfa);
   color: #0b1021;
   border: 1px solid rgba(47, 203, 140, 0.65);
+}
+
+:root.theme-light .btn-primary,
+[data-theme="light"] .btn-primary {
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: none;
+}
+
+:root.theme-light .btn-primary:hover,
+[data-theme="light"] .btn-primary:hover {
+  background: var(--primary-soft);
+  box-shadow: none;
+}
+
+:root.theme-light .btn-success,
+[data-theme="light"] .btn-success {
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: none;
+}
+
+:root.theme-light .btn-success:hover,
+[data-theme="light"] .btn-success:hover {
+  background: var(--primary-soft);
+  box-shadow: none;
 }
 
 .card {
