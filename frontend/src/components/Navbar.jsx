@@ -33,18 +33,12 @@ const Navbar = () => {
         <Link to="/" className="navbar-brand">
           <img src={logo} alt="Spectral Real Estate Solutions" className="navbar-brand__logo" />
           <div>
-            <h1 className="navbar-brand__title">Brighter Control Knowledge Hub</h1>
+            <h1 className="navbar-brand__title">Brighter Control Team</h1>
             <div className="navbar-brand__subtitle">Team-wide knowledge sharing & duty coordination</div>
           </div>
         </Link>
         <div className="navbar-links">
           <ThemeToggleButton />
-          {user && (
-            <>
-              <Link to="/" className="nav-ghost-link">Knowledge</Link>
-              <Link to="/buildings" className="nav-ghost-link">Buildings</Link>
-            </>
-          )}
           {user ? (
             <>
               <div className={`navbar-user ${isMenuOpen ? 'is-open' : ''}`} ref={menuRef}>
