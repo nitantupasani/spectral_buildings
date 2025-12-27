@@ -90,6 +90,7 @@ const KnowledgeHub = () => {
       {activeTab === 'buildings' ? (
         <div className="card">
           <div className="eyebrow" style={{ color: currentTab.accent }}>{currentTab.title}</div>
+          <h3 style={{ marginBottom: '6px' }}>Building Intelligence</h3>
           <BuildingList />
         </div>
       ) : (
