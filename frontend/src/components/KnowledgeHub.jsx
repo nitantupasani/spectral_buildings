@@ -10,28 +10,24 @@ const KnowledgeHub = () => {
       key: 'general',
       label: 'General Announcements',
       title: 'General Announcements',
-      description: 'Share quick updates, alerts, and wins across the Brighter Control Team.',
       accent: '#8ef0b5'
     },
     {
       key: 'onboarding',
       label: 'Mapping & Onboarding',
       title: 'Mapping & Onboarding',
-      description: 'Capture SOPs, onboarding notes, and site mapping status for new clients.',
       accent: '#7cd7ff'
     },
     {
       key: 'duty',
       label: 'Duty Log',
       title: 'Duty Log',
-      description: 'Record daily duty shifts, escalations, and handover notes.',
       accent: '#ffd580'
     },
     {
       key: 'buildings',
       label: 'Buildings',
       title: 'Buildings',
-      description: 'Dive into building-specific intelligence, status, and voice notes.',
       accent: '#d9b3ff'
     }
   ]), []);
@@ -68,10 +64,6 @@ const KnowledgeHub = () => {
         <div>
           <div className="eyebrow">BRIGHTER CONTROL TEAM</div>
           <h1 className="hero-title">Knowledge Sharing Platform</h1>
-          <p className="hero-subtitle">
-            A single place for the Brighter Control Team to announce, onboard, coordinate duty shifts,
-            and capture building intelligence with voice notes and attachments.
-          </p>
           <div className="hero-pills">
             <button type="button" className="pill pill-action" onClick={openGeneralVoice}>
               🎤 Quick voice note
@@ -79,7 +71,6 @@ const KnowledgeHub = () => {
             <button type="button" className="pill pill-action" onClick={openGeneralPosts}>
               📝 New post for General
             </button>
-            <span className="pill pill-muted">📎 File & media attachments supported</span>
           </div>
         </div>
       </div>
@@ -99,17 +90,12 @@ const KnowledgeHub = () => {
       {activeTab === 'buildings' ? (
         <div className="card">
           <div className="eyebrow" style={{ color: currentTab.accent }}>{currentTab.title}</div>
-          <h3 style={{ marginBottom: '6px' }}>Building Intelligence</h3>
-          <p className="channel-description">
-            The building list and detail pages stay available for deep dives—voice notes and attachments included.
-          </p>
           <BuildingList />
         </div>
       ) : (
         <ChannelFeed
           channel={currentTab.key}
           title={currentTab.title}
-          description={currentTab.description}
           accent={currentTab.accent}
           refreshKey={currentTab.key === 'general' ? generalRefreshKey : 0}
         />

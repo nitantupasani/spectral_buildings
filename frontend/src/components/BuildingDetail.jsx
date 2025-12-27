@@ -209,7 +209,7 @@ const BuildingDetail = () => {
   };
 
   if (loading) {
-    return <LoadingScreen message="Pulling building intelligence" />;
+    return <LoadingScreen message="Loading building details" />;
   }
 
   if (!building) {

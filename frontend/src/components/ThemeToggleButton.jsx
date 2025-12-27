@@ -20,7 +20,6 @@ const ThemeToggleButton = () => {
       </span>
       <span className="theme-toggle__label">
         <span className="theme-toggle__state">{isDark ? 'Dark mode' : 'Light mode'}</span>
-        <span className="theme-toggle__hint">Tap to toggle</span>
       </span>
     </button>
   );
