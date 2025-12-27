@@ -2,9 +2,13 @@ import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
 import logo from '../assets/spectral-logo.svg';
+import ThemeToggleButton from './ThemeToggleButton';
+import { LinkedinIcon, MailIcon } from './Icons';
+import { useTheme } from '../ThemeContext';
 
-const Navbar = ({ theme, onToggleTheme }) => {
+const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -23,23 +27,31 @@ const Navbar = ({ theme, onToggleTheme }) => {
           </div>
         </Link>
         <div className="navbar-links">
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={onToggleTheme}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-          >
-            <div className={`theme-toggle__thumb ${theme === 'dark' ? 'is-dark' : ''}`}>
-              {theme === 'light' ? '☀️' : '🌙'}
-            </div>
-            <span className="theme-toggle__label">{theme === 'light' ? 'Light' : 'Dark'} mode</span>
-          </button>
+          <ThemeToggleButton />
           {user && (
             <>
               <Link to="/" className="nav-ghost-link">Knowledge</Link>
               <Link to="/buildings" className="nav-ghost-link">Buildings</Link>
             </>
           )}
+          <div className="navbar-contact">
+            <a
+              className={`nav-icon-link ${theme === 'dark' ? 'is-dark' : 'is-light'}`}
+              href="https://www.linkedin.com/company/spectral-energy/"
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label="Spectral on LinkedIn"
+            >
+              <LinkedinIcon className="nav-icon" />
+            </a>
+            <a
+              className={`nav-icon-link ${theme === 'dark' ? 'is-dark' : 'is-light'}`}
+              href="mailto:info@spectral.energy"
+              aria-label="Contact Spectral via email"
+            >
+              <MailIcon className="nav-icon" />
+            </a>
+          </div>
           {user ? (
             <>
               <span>Welcome, {user.username} ({user.role})</span>
