@@ -153,6 +153,7 @@ router.post('/text',
   auth,
   upload.array('attachments', 10),
   [
+    body('title').isString().trim().isLength({ min: 1, max: 140 }),
     body('content').notEmpty(),
     body().custom((body) => body.buildingId || body.channel)
       .withMessage('buildingId or channel is required'),
@@ -188,6 +189,7 @@ router.post('/text',
         building: buildingId || undefined,
         channel: channel || undefined,
         user: req.user.userId,
+        title: req.body.title?.trim(),
         type: 'text',
         content,
         attachments
@@ -236,6 +238,7 @@ router.post('/voice/transcribe', [auth, memoryUpload.single('audio')], async (re
 
 // Create link note
 router.post('/link', [auth, [
+  body('title').isString().trim().isLength({ min: 1, max: 140 }),
   body('content').isURL(),
   body().custom((body) => body.buildingId || body.channel)
     .withMessage('buildingId or channel is required'),
@@ -253,6 +256,7 @@ router.post('/link', [auth, [
       building: buildingId || undefined,
       channel: channel || undefined,
       user: req.user.userId,
+      title: req.body.title?.trim(),
       type: 'link',
       content
     });
@@ -283,6 +287,9 @@ router.post('/voice', [auth, upload.fields([
     }
     if (channel && !isValidChannel(channel)) {
       return res.status(400).json({ message: 'Invalid channel' });
+    }
+    if (!req.body.title || !req.body.title.trim()) {
+      return res.status(400).json({ message: 'Title is required' });
     }
     const audioFile = req.files.audio[0];
     const attachmentFiles = req.files.attachments || [];
@@ -317,6 +324,7 @@ router.post('/voice', [auth, upload.fields([
       building: buildingId || undefined,
       channel: channel || undefined,
       user: req.user.userId,
+      title: req.body.title?.trim(),
       type: 'voice',
       content: finalTranscription || 'Voice note',
       transcription: finalTranscription || '',
@@ -349,11 +357,15 @@ router.post('/image', [auth, upload.single('image')], async (req, res) => {
     if (channel && !isValidChannel(channel)) {
       return res.status(400).json({ message: 'Invalid channel' });
     }
+    if (!req.body.title || !req.body.title.trim()) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
 
     const note = new Note({
       building: buildingId || undefined,
       channel: channel || undefined,
       user: req.user.userId,
+      title: req.body.title?.trim(),
       type: 'image',
       content: content || 'Image attachment',
       fileUrl: `/uploads/${req.file.filename}`
@@ -412,8 +424,13 @@ router.put('/:id', auth, upload.fields([
       return res.status(404).json({ message: 'Note not found' });
     }
 
+    if (req.body.title !== undefined && !req.body.title.trim()) {
+      return res.status(400).json({ message: 'Title cannot be empty' });
+    }
+
     // Store previous values for revision history
     const previousValues = {
+      title: note.title,
       content: note.content,
       description: note.description,
       transcription: note.transcription,
@@ -422,6 +439,11 @@ router.put('/:id', auth, upload.fields([
 
     // Track what changed
     let changes = [];
+
+    if (req.body.title && req.body.title.trim() !== note.title) {
+      changes.push('title');
+      note.title = req.body.title.trim();
+    }
     
     if (content && content !== note.content) {
       changes.push('content');

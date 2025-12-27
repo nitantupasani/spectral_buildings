@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { notesAPI } from '../api';
 
 const EditNoteModal = ({ note, onClose, onNoteUpdated }) => {
+  const [title, setTitle] = useState(note.title || '');
   const [content, setContent] = useState(note.content || '');
   const [description, setDescription] = useState(note.description || '');
   const [transcription, setTranscription] = useState(note.transcription || '');
@@ -33,6 +34,10 @@ const EditNoteModal = ({ note, onClose, onNoteUpdated }) => {
       const formData = new FormData();
       
       // Only include fields that are editable for this note type
+      if (title) {
+        formData.append('title', title);
+      }
+
       if (note.type === 'text' || note.type === 'link') {
         formData.append('content', content);
       }
@@ -76,6 +81,17 @@ const EditNoteModal = ({ note, onClose, onNoteUpdated }) => {
         </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            <div className="form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="form-control"
+              />
+            </div>
+
             {(note.type === 'text' || note.type === 'link') && (
               <div className="form-group">
                 <label>{note.type === 'link' ? 'URL' : 'Content'}</label>
