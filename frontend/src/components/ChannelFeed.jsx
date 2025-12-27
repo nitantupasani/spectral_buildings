@@ -8,7 +8,7 @@ import RevisionHistory from './RevisionHistory';
 import EditNoteModal from './EditNoteModal';
 import LoadingScreen from './LoadingScreen';
 
-const ChannelFeed = ({ channel, title, description, accent, refreshKey = 0 }) => {
+const ChannelFeed = ({ channel, title, accent, refreshKey = 0 }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -206,7 +206,6 @@ const ChannelFeed = ({ channel, title, description, accent, refreshKey = 0 }) =>
           <div>
             <div className="eyebrow" style={{ color: accent }}>{channel.toUpperCase()}</div>
             <h3 className="channel-title">{title}</h3>
-            <p className="channel-description">{description}</p>
           </div>
           <div className="channel-actions compact">
             <button className="btn btn-success btn-compact" onClick={() => setShowVoiceModal(true)}>
