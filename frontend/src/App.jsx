@@ -20,11 +20,22 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'light');
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   return (
     <AuthProvider>
       <Router>
         <div className="App">
-          <Navbar />
+          <Navbar theme={theme} onToggleTheme={toggleTheme} />
           <div className="container">
             <Routes>
               <Route path="/login" element={<Login />} />

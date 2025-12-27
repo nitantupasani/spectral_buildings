@@ -53,11 +53,6 @@ const KnowledgeHub = () => {
             <span className="pill">📎 File & media attachments</span>
           </div>
         </div>
-        <div className="hero-stat">
-          <div className="stat-value">4</div>
-          <div className="stat-label">Knowledge Streams</div>
-          <p className="stat-desc">General, Mapping & Onboarding, Duty Log, and Building intel.</p>
-        </div>
       </div>
 
       <div className="tab-strip">

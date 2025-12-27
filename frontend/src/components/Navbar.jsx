@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
 import logo from '../assets/spectral-logo.svg';
 
-const Navbar = () => {
+const Navbar = ({ theme, onToggleTheme }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -23,6 +23,17 @@ const Navbar = () => {
           </div>
         </Link>
         <div className="navbar-links">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={onToggleTheme}
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            <div className={`theme-toggle__thumb ${theme === 'dark' ? 'is-dark' : ''}`}>
+              {theme === 'light' ? '☀️' : '🌙'}
+            </div>
+            <span className="theme-toggle__label">{theme === 'light' ? 'Light' : 'Dark'} mode</span>
+          </button>
           {user && (
             <>
               <Link to="/" className="nav-ghost-link">Knowledge</Link>
