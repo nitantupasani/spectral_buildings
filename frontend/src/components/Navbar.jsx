@@ -3,12 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
 import logo from '../assets/spectral-logo.svg';
 import ThemeToggleButton from './ThemeToggleButton';
-import { LinkedinIcon, MailIcon } from './Icons';
-import { useTheme } from '../ThemeContext';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
-  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -19,11 +16,11 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-content">
-        <Link to="/" style={{ textDecoration: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src={logo} alt="Spectral Real Estate Solutions" style={{ width: '46px', height: 'auto' }} />
+        <Link to="/" className="navbar-brand">
+          <img src={logo} alt="Spectral Real Estate Solutions" className="navbar-brand__logo" />
           <div>
-            <h1 style={{ margin: 0 }}>Brighter Control Knowledge Hub</h1>
-            <div style={{ fontSize: '12px', color: 'var(--muted)', letterSpacing: '0.08em' }}>Team-wide knowledge sharing & duty coordination</div>
+            <h1 className="navbar-brand__title">Brighter Control Knowledge Hub</h1>
+            <div className="navbar-brand__subtitle">Team-wide knowledge sharing & duty coordination</div>
           </div>
         </Link>
         <div className="navbar-links">
@@ -34,33 +31,18 @@ const Navbar = () => {
               <Link to="/buildings" className="nav-ghost-link">Buildings</Link>
             </>
           )}
-          <div className="navbar-contact">
-            <a
-              className={`nav-icon-link ${theme === 'dark' ? 'is-dark' : 'is-light'}`}
-              href="https://www.linkedin.com/company/spectral-energy/"
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label="Spectral on LinkedIn"
-            >
-              <LinkedinIcon className="nav-icon" />
-            </a>
-            <a
-              className={`nav-icon-link ${theme === 'dark' ? 'is-dark' : 'is-light'}`}
-              href="mailto:info@spectral.energy"
-              aria-label="Contact Spectral via email"
-            >
-              <MailIcon className="nav-icon" />
-            </a>
-          </div>
           {user ? (
             <>
-              <span>Welcome, {user.username} ({user.role})</span>
-              <button onClick={handleLogout}>Logout</button>
+              <div className="navbar-user">
+                <span className="navbar-user__name">{user.username}</span>
+                <span className="navbar-user__role">{user.role}</span>
+              </div>
+              <button className="btn btn-secondary navbar-logout" onClick={handleLogout}>
+                Logout from {user.username}
+              </button>
             </>
           ) : (
-            <Link to="/login" style={{ color: 'white', textDecoration: 'none' }}>
-              Login
-            </Link>
+            <Link to="/login" className="nav-ghost-link">Login</Link>
           )}
         </div>
       </div>
