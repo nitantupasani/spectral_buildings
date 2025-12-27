@@ -62,7 +62,10 @@ export const notesAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getHistory: (id) => api.get(`/notes/${id}/history`),
-  delete: (id) => api.delete(`/notes/${id}`)
+  delete: (id) => api.delete(`/notes/${id}`),
+  // Important Links API (real backend integration)
+  getLinksByChannel: (channel) => api.get(`/links/channel/${channel}`),
+  addLink: (link) => api.post('/links', link)
 };
 
 export default api;

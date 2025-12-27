@@ -202,28 +202,28 @@ const BuildingList = () => {
                       border: '1px solid var(--border)',
                     }}
                   >
-                    <h3 style={{ fontWeight: '700', fontSize: '16px', letterSpacing: '0.02em' }}>
+                    <h3 style={{ fontWeight: '600', fontSize: '14px', letterSpacing: '0.01em', marginBottom: 2 }}>
                       📍 {building.address}
                     </h3>
-                    <p style={{ marginTop: '6px', fontSize: '14px', color: 'var(--muted)' }}>
+                    <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--muted)' }}>
                       {building.name}
                     </p>
                     {building.client && (
-                      <p style={{ marginTop: '10px', fontSize: '13px', color: 'var(--muted)', fontWeight: 600 }}>
+                      <p style={{ marginTop: '6px', fontSize: '11.5px', color: 'var(--muted)', fontWeight: 500 }}>
                         Client: {building.client}
                       </p>
                     )}
                     {building.description && (
-                      <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text)', lineHeight: 1.6 }}>
+                      <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>
                         {building.description}
                       </p>
                     )}
-                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span
                         style={{
-                          padding: '6px 12px',
-                          borderRadius: '14px',
-                          fontSize: '12px',
+                          padding: '4px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px',
                           backgroundColor: building.status === 'active' ? 'rgba(28, 198, 118, 0.16)' : 'rgba(255, 95, 82, 0.16)',
                           color: building.status === 'active' ? '#9fffc6' : '#ffc6c0',
                           border: `1px solid ${building.status === 'active' ? 'var(--primary)' : '#ff5f52'}`
@@ -231,7 +231,7 @@ const BuildingList = () => {
                       >
                         {building.status}
                       </span>
-                      <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
                         {new Date(building.onboardedDate).toLocaleDateString()}
                       </span>
                     </div>

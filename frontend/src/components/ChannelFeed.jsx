@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import ImportantLinks from './ImportantLinks';
 import { formatDistanceToNow } from 'date-fns';
 import { notesAPI } from '../api';
 import AddNoteModal from './AddNoteModal';
@@ -199,19 +200,22 @@ const ChannelFeed = ({ channel, title, description, accent }) => {
 
   return (
     <div className="card channel-card">
-      <div className="channel-header" style={{ borderColor: accent }}>
-        <div>
+      <div className="channel-header" style={{ borderColor: accent, alignItems: 'flex-start' }}>
+        <div style={{ flex: 1 }}>
           <div className="eyebrow" style={{ color: accent }}>{channel.toUpperCase()}</div>
           <h3 className="channel-title">{title}</h3>
           <p className="channel-description">{description}</p>
+          <div className="channel-actions compact">
+            <button className="btn btn-success btn-compact" onClick={() => setShowVoiceModal(true)}>
+              🎤 Voice
+            </button>
+            <button className="btn btn-primary btn-compact" onClick={() => setShowAddModal(true)}>
+              + Post
+            </button>
+          </div>
         </div>
-        <div className="channel-actions">
-          <button className="btn btn-success" onClick={() => setShowVoiceModal(true)}>
-            🎤 Voice Note
-          </button>
-          <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-            + Add Post
-          </button>
+        <div className="important-links-sidebar">
+          <ImportantLinks channel={channel} />
         </div>
       </div>
 

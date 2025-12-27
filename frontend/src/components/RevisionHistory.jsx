@@ -39,10 +39,10 @@ const RevisionHistory = ({ noteId, onClose }) => {
               <div
                 key={idx}
                 style={{
-                  marginBottom: '10px',
-                  padding: '10px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  borderRadius: '10px',
+                  marginBottom: '6px',
+                  padding: '7px',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: '6px',
                   border: '1px solid var(--border)'
                 }}
               >
@@ -56,10 +56,10 @@ const RevisionHistory = ({ noteId, onClose }) => {
               <div
                 key={idx}
                 style={{
-                  marginBottom: '10px',
-                  padding: '10px',
-                  background: 'linear-gradient(135deg, rgba(255, 196, 86, 0.14), rgba(28, 198, 118, 0.04))',
-                  borderRadius: '10px',
+                  marginBottom: '6px',
+                  padding: '7px',
+                  background: 'linear-gradient(135deg, rgba(255, 196, 86, 0.10), rgba(28, 198, 118, 0.02))',
+                  borderRadius: '6px',
                   border: '1px solid var(--border)'
                 }}
               >
@@ -73,10 +73,10 @@ const RevisionHistory = ({ noteId, onClose }) => {
               <div
                 key={idx}
                 style={{
-                  marginBottom: '10px',
-                  padding: '10px',
-                  background: 'linear-gradient(135deg, rgba(28, 198, 118, 0.14), rgba(122, 255, 186, 0.08))',
-                  borderRadius: '10px',
+                  marginBottom: '6px',
+                  padding: '7px',
+                  background: 'linear-gradient(135deg, rgba(28, 198, 118, 0.10), rgba(122, 255, 186, 0.04))',
+                  borderRadius: '6px',
                   border: '1px solid var(--border)'
                 }}
               >
@@ -90,10 +90,10 @@ const RevisionHistory = ({ noteId, onClose }) => {
               <div
                 key={idx}
                 style={{
-                  marginBottom: '10px',
-                  padding: '10px',
-                  background: 'linear-gradient(135deg, rgba(255, 196, 86, 0.16), rgba(28, 198, 118, 0.05))',
-                  borderRadius: '10px',
+                  marginBottom: '6px',
+                  padding: '7px',
+                  background: 'linear-gradient(135deg, rgba(255, 196, 86, 0.10), rgba(28, 198, 118, 0.02))',
+                  borderRadius: '6px',
                   border: '1px solid var(--border)'
                 }}
               >
@@ -146,16 +146,16 @@ const RevisionHistory = ({ noteId, onClose }) => {
                 <div
                   key={index}
                   style={{
-                    padding: '16px',
-                    marginBottom: '16px',
+                    padding: '10px',
+                    marginBottom: '10px',
                     border: '1px solid var(--border)',
-                    borderRadius: '12px',
+                    borderRadius: '8px',
                     background: 'var(--glass)',
-                    boxShadow: 'var(--shadow)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
                     borderColor: index === 0 ? 'rgba(28, 198, 118, 0.45)' : 'var(--border)'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                     <div>
                       <span style={{ fontWeight: 'bold' }}>
                         {revision.editedBy?.username || 'Unknown User'}
@@ -173,7 +173,7 @@ const RevisionHistory = ({ noteId, onClose }) => {
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
+                    <span style={{ fontSize: '11.5px', color: 'var(--muted)' }}>
                       {formatDistanceToNow(new Date(revision.editedAt), { addSuffix: true })}
                     </span>
                   </div>

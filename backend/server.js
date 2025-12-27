@@ -7,7 +7,9 @@ const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const buildingRoutes = require('./routes/buildings');
+
 const noteRoutes = require('./routes/notes');
+const linksRoutes = require('./routes/links');
 
 const app = express();
 
@@ -56,6 +58,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/buildings', buildingRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/links', linksRoutes);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/spectral_buildings')
