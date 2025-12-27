@@ -200,129 +200,133 @@ const ChannelFeed = ({ channel, title, description, accent }) => {
   }
 
   return (
-    <div className="card channel-card">
-      <div className="channel-header" style={{ borderColor: accent }}>
-        <div>
-          <div className="eyebrow" style={{ color: accent }}>{channel.toUpperCase()}</div>
-          <h3 className="channel-title">{title}</h3>
-          <p className="channel-description">{description}</p>
-        </div>
-        <div className="channel-actions compact">
-          <button className="btn btn-success btn-compact" onClick={() => setShowVoiceModal(true)}>
-            🎤 Voice
-          </button>
-          <button className="btn btn-primary btn-compact" onClick={() => setShowAddModal(true)}>
-            + Post
-          </button>
+    <div className="channel-shell">
+      <div className="card channel-card channel-card--header">
+        <div className="channel-header" style={{ borderColor: accent }}>
+          <div>
+            <div className="eyebrow" style={{ color: accent }}>{channel.toUpperCase()}</div>
+            <h3 className="channel-title">{title}</h3>
+            <p className="channel-description">{description}</p>
+          </div>
+          <div className="channel-actions compact">
+            <button className="btn btn-success btn-compact" onClick={() => setShowVoiceModal(true)}>
+              🎤 Voice
+            </button>
+            <button className="btn btn-primary btn-compact" onClick={() => setShowAddModal(true)}>
+              + Post
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="channel-body">
-        <div className="channel-main">
-          <div className="summary-card">
-            <div className="summary-card__header">
-              <div>
-                <div className="eyebrow">Summary</div>
-                <p className="summary-card__body">No summary added yet. Capture highlights for this stream here.</p>
+      <div className="card channel-body-card">
+        <div className="channel-body">
+          <div className="channel-main">
+            <div className="summary-card">
+              <div className="summary-card__header">
+                <div>
+                  <div className="eyebrow">Summary</div>
+                  <p className="summary-card__body">No summary added yet. Capture highlights for this stream here.</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="note-section">
-            <div className="note-section__header">
-              <div className="eyebrow">Posts</div>
-              <span className="note-section__hint">Latest updates, voice notes, and attachments appear here.</span>
-            </div>
-
-            {notes.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-pill" style={{ borderColor: accent, color: accent }}>No posts yet</div>
-                <p style={{ color: 'var(--muted)', marginTop: '8px' }}>
-                  Start the conversation with a quick announcement, duty note, or onboarding tip.
-                </p>
+            <div className="note-section">
+              <div className="note-section__header">
+                <div className="eyebrow">Posts</div>
+                <span className="note-section__hint">Latest updates, voice notes, and attachments appear here.</span>
               </div>
-            ) : (
-              <div className="note-tiles">
-                {notes.map((note) => (
-                  <div key={note._id} className={`note-tile ${expandedNotes.has(note._id) ? 'expanded' : ''}`}>
-                    <button
-                      type="button"
-                      className="note-tile__header"
-                      onClick={() => {
-                        setExpandedNotes((prev) => {
-                          const next = new Set(prev);
-                          next.has(note._id) ? next.delete(note._id) : next.add(note._id);
-                          return next;
-                        });
-                      }}
-                    >
-                      <div className="note-tile__title-row">
-                        <div className="note-tile__title">{note.title || 'Untitled post'}</div>
-                        <div className="note-tile__meta">
-                          <span className="note-user">{note.user.username}</span>
-                          <span className="note-dot">•</span>
-                          <span className="note-timestamp">
-                            {new Date(note.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+
+              {notes.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-pill" style={{ borderColor: accent, color: accent }}>No posts yet</div>
+                  <p style={{ color: 'var(--muted)', marginTop: '8px' }}>
+                    Start the conversation with a quick announcement, duty note, or onboarding tip.
+                  </p>
+                </div>
+              ) : (
+                <div className="note-tiles">
+                  {notes.map((note) => (
+                    <div key={note._id} className={`note-tile ${expandedNotes.has(note._id) ? 'expanded' : ''}`}>
+                      <button
+                        type="button"
+                        className="note-tile__header"
+                        onClick={() => {
+                          setExpandedNotes((prev) => {
+                            const next = new Set(prev);
+                            next.has(note._id) ? next.delete(note._id) : next.add(note._id);
+                            return next;
+                          });
+                        }}
+                      >
+                        <div className="note-tile__title-row">
+                          <div className="note-tile__title">{note.title || 'Untitled post'}</div>
+                          <div className="note-tile__meta">
+                            <span className="note-user">{note.user.username}</span>
+                            <span className="note-dot">•</span>
+                            <span className="note-timestamp">
+                              {new Date(note.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="note-tile__badges">
+                          <span className={`note-type-badge note-type-${note.type}`}>{note.type}</span>
+                          <span className="note-time-compact">
+                            {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
                           </span>
                         </div>
-                      </div>
-                      <div className="note-tile__badges">
-                        <span className={`note-type-badge note-type-${note.type}`}>{note.type}</span>
-                        <span className="note-time-compact">
-                          {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
-                        </span>
-                      </div>
-                    </button>
+                      </button>
 
-                    {expandedNotes.has(note._id) && (
-                      <div className="note-tile__body">
-                        <div className="note-tile__toolbar">
-                          {note.editHistory && note.editHistory.length > 0 && (
+                      {expandedNotes.has(note._id) && (
+                        <div className="note-tile__body">
+                          <div className="note-tile__toolbar">
+                            {note.editHistory && note.editHistory.length > 0 && (
+                              <button
+                                className="btn btn-secondary btn-compact"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingHistory(note._id);
+                                }}
+                              >
+                                View History
+                              </button>
+                            )}
                             <button
-                              className="btn btn-secondary btn-compact"
+                              className="btn btn-primary btn-compact"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setViewingHistory(note._id);
+                                setEditingNote(note);
                               }}
                             >
-                              View History
+                              Edit
                             </button>
+                            <button
+                              className="btn btn-danger btn-compact"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(note._id);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                          {note.editedBy && (
+                            <div className="note-edited">Edited by {note.editedBy.username} {formatDistanceToNow(new Date(note.editedAt), { addSuffix: true })}</div>
                           )}
-                          <button
-                            className="btn btn-primary btn-compact"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingNote(note);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-danger btn-compact"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(note._id);
-                            }}
-                          >
-                            Delete
-                          </button>
+                          {renderNoteContent(note)}
                         </div>
-                        {note.editedBy && (
-                          <div className="note-edited">Edited by {note.editedBy.username} {formatDistanceToNow(new Date(note.editedAt), { addSuffix: true })}</div>
-                        )}
-                        {renderNoteContent(note)}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        <aside className="channel-aside">
-          <ImportantLinks channel={channel} />
-        </aside>
+          <aside className="channel-aside">
+            <ImportantLinks channel={channel} />
+          </aside>
+        </div>
       </div>
 
       {showAddModal && (
