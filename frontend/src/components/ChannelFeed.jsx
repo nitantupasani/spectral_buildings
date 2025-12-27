@@ -8,7 +8,7 @@ import RevisionHistory from './RevisionHistory';
 import EditNoteModal from './EditNoteModal';
 import LoadingScreen from './LoadingScreen';
 
-const ChannelFeed = ({ channel, title, description, accent }) => {
+const ChannelFeed = ({ channel, title, description, accent, refreshKey = 0 }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -21,7 +21,7 @@ const ChannelFeed = ({ channel, title, description, accent }) => {
   useEffect(() => {
     fetchNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel]);
+  }, [channel, refreshKey]);
 
   const fetchNotes = async () => {
     try {

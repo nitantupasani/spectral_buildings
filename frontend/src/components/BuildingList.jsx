@@ -36,6 +36,28 @@ const BuildingList = () => {
   };
 
   const getStatusLabel = (status = '') => status?.trim() || 'Unknown';
+  const statusThemes = {
+    active: { bg: 'rgba(54, 201, 130, 0.18)', border: 'rgba(54, 201, 130, 0.5)', text: '#18a46c' },
+    onboarding: { bg: 'rgba(92, 130, 255, 0.16)', border: 'rgba(92, 130, 255, 0.5)', text: '#4b61e8' },
+    control: { bg: 'rgba(255, 196, 86, 0.18)', border: 'rgba(255, 196, 86, 0.55)', text: '#c57a00' },
+    'bms data only': { bg: 'rgba(0, 209, 255, 0.16)', border: 'rgba(0, 209, 255, 0.45)', text: '#0086a3' },
+    'on-hold': { bg: 'rgba(255, 124, 124, 0.16)', border: 'rgba(255, 124, 124, 0.5)', text: '#c94b4b' },
+    'on hold': { bg: 'rgba(255, 124, 124, 0.16)', border: 'rgba(255, 124, 124, 0.5)', text: '#c94b4b' },
+    renovations: { bg: 'rgba(255, 196, 86, 0.16)', border: 'rgba(255, 196, 86, 0.5)', text: '#a86a00' }
+  };
+
+  const getStatusTheme = (status) => {
+    const normalized = getStatusLabel(status).toLowerCase();
+    return statusThemes[normalized] || { bg: 'rgba(76, 142, 255, 0.12)', border: 'rgba(76, 142, 255, 0.35)', text: 'var(--text)' };
+  };
+
+  const formatDisplayDate = (dateValue) => {
+    if (!dateValue) return '—';
+    const parsed = new Date(dateValue);
+    return Number.isNaN(parsed.getTime())
+      ? '—'
+      : parsed.toLocaleDateString(undefined, { dateStyle: 'medium' });
+  };
 
   const statusOptions = useMemo(() => {
     const uniqueStatuses = new Set(buildings.map((building) => getStatusLabel(building.status)));
@@ -185,52 +207,56 @@ const BuildingList = () => {
               </div>
             </div>
           ) : (
-            <div className="grid">
-              {filteredBuildings.map((building) => (
-                <Link
-                  key={building._id}
-                  to={`/building/${building._id}`}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  <div
-                    className="card building-card"
+            <div className="grid building-grid">
+              {filteredBuildings.map((building) => {
+                const statusLabel = getStatusLabel(building.status);
+                const statusTheme = getStatusTheme(building.status);
+                const updatedDate = formatDisplayDate(building.updatedAt || building.onboardedDate);
+
+                return (
+                  <Link
+                    key={building._id}
+                    to={`/building/${building._id}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
                   >
-                    <h3 style={{ fontWeight: '600', fontSize: '14px', letterSpacing: '0.01em', marginBottom: 2 }}>
-                      📍 {building.address}
-                    </h3>
-                    <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--muted)' }}>
-                      {building.name}
-                    </p>
-                    {building.client && (
-                      <p style={{ marginTop: '6px', fontSize: '11.5px', color: 'var(--muted)', fontWeight: 500 }}>
-                        Client: {building.client}
-                      </p>
-                    )}
-                    {building.description && (
-                      <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>
-                        {building.description}
-                      </p>
-                    )}
-                    <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '10px',
-                          fontSize: '11px',
-                          backgroundColor: building.status === 'active' ? 'rgba(28, 198, 118, 0.16)' : 'rgba(255, 95, 82, 0.16)',
-                          color: building.status === 'active' ? '#9fffc6' : '#ffc6c0',
-                          border: `1px solid ${building.status === 'active' ? 'var(--primary)' : '#ff5f52'}`
-                        }}
-                      >
-                        {building.status}
-                      </span>
-                      <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                        {new Date(building.onboardedDate).toLocaleDateString()}
-                      </span>
+                    <div className="card building-card">
+                      <div className="building-card__top">
+                        <div>
+                          <p className="building-card__eyebrow">Building</p>
+                          <h3 className="building-card__title">{building.name || building.address || 'Untitled'}</h3>
+                        </div>
+                        <span
+                          className="status-chip"
+                          style={{
+                            backgroundColor: statusTheme.bg,
+                            borderColor: statusTheme.border,
+                            color: statusTheme.text
+                          }}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+
+                      <p className="building-card__address">📍 {building.address || 'Address pending'}</p>
+
+                      {building.client && (
+                        <p className="building-card__meta">Client: {building.client}</p>
+                      )}
+
+                      {building.description && (
+                        <p className="building-card__description">{building.description}</p>
+                      )}
+
+                      <div className="building-card__footer">
+                        <span className="building-card__tag">Updated {updatedDate}</span>
+                        <span className="building-card__tag building-card__tag--muted">
+                          Onboarded {formatDisplayDate(building.onboardedDate)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </>

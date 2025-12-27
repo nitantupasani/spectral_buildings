@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import ChannelFeed from './ChannelFeed';
 import BuildingList from './BuildingList';
+import AddNoteModal from './AddNoteModal';
+import VoiceRecorder from './VoiceRecorder';
 
 const KnowledgeHub = () => {
   const tabs = useMemo(() => ([
@@ -35,7 +37,30 @@ const KnowledgeHub = () => {
   ]), []);
 
   const [activeTab, setActiveTab] = useState('general');
+  const [showGeneralPostModal, setShowGeneralPostModal] = useState(false);
+  const [showGeneralVoiceModal, setShowGeneralVoiceModal] = useState(false);
+  const [generalRefreshKey, setGeneralRefreshKey] = useState(0);
   const currentTab = tabs.find((t) => t.key === activeTab) || tabs[0];
+
+  const openGeneralPosts = () => {
+    setActiveTab('general');
+    setShowGeneralPostModal(true);
+  };
+
+  const openGeneralVoice = () => {
+    setActiveTab('general');
+    setShowGeneralVoiceModal(true);
+  };
+
+  const handleGeneralNoteAdded = () => {
+    setGeneralRefreshKey((prev) => prev + 1);
+    setShowGeneralPostModal(false);
+  };
+
+  const handleGeneralVoiceAdded = () => {
+    setGeneralRefreshKey((prev) => prev + 1);
+    setShowGeneralVoiceModal(false);
+  };
 
   return (
     <div className="knowledge-layout">
@@ -48,9 +73,13 @@ const KnowledgeHub = () => {
             and capture building intelligence with voice notes and attachments.
           </p>
           <div className="hero-pills">
-            <span className="pill">🎤 Voice notes</span>
-            <span className="pill">📝 Rich posts</span>
-            <span className="pill">📎 File & media attachments</span>
+            <button type="button" className="pill pill-action" onClick={openGeneralVoice}>
+              🎤 Quick voice note
+            </button>
+            <button type="button" className="pill pill-action" onClick={openGeneralPosts}>
+              📝 New post for General
+            </button>
+            <span className="pill pill-muted">📎 File & media attachments supported</span>
           </div>
         </div>
       </div>
@@ -82,6 +111,23 @@ const KnowledgeHub = () => {
           title={currentTab.title}
           description={currentTab.description}
           accent={currentTab.accent}
+          refreshKey={currentTab.key === 'general' ? generalRefreshKey : 0}
+        />
+      )}
+
+      {showGeneralPostModal && (
+        <AddNoteModal
+          channel="general"
+          onClose={() => setShowGeneralPostModal(false)}
+          onNoteAdded={handleGeneralNoteAdded}
+        />
+      )}
+
+      {showGeneralVoiceModal && (
+        <VoiceRecorder
+          channel="general"
+          onClose={() => setShowGeneralVoiceModal(false)}
+          onVoiceNoteAdded={handleGeneralVoiceAdded}
         />
       )}
     </div>
