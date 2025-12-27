@@ -873,6 +873,12 @@ select.form-control option {
   border-color: rgba(255, 196, 86, 0.7);
 }
 
+.status-control {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 .status-unknown {
   background: var(--surface);
   color: var(--muted);
@@ -1716,10 +1722,11 @@ img.note-image {
 
 .building-card__footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .building-card__tag {
@@ -1743,7 +1750,11 @@ img.note-image {
   border: 1px solid var(--border);
   font-weight: 700;
   text-transform: capitalize;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+  display: inline-block;
+  max-width: 100%;
 }
 
 @media (max-width: 960px) {
