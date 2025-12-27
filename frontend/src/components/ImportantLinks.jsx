@@ -7,20 +7,42 @@ const ImportantLinks = ({ channel }) => {
   const [form, setForm] = useState({ title: '', url: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLinks();
-    // eslint-disable-next-line
-  }, [channel]);
+    let isMounted = true;
 
-  const fetchLinks = async () => {
-    try {
-      const { data } = await notesAPI.getLinksByChannel(channel);
-      setLinks(data);
-    } catch (err) {
-      setLinks([]);
-    }
-  };
+    const resetStateForChannel = () => {
+      setShowForm(false);
+      setForm({ title: '', url: '' });
+      setError('');
+      setLoading(true);
+    };
+
+    const fetchLinks = async () => {
+      try {
+        const { data } = await notesAPI.getLinksByChannel(channel);
+        if (isMounted) {
+          setLinks(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setLinks([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    resetStateForChannel();
+    fetchLinks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [channel]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -28,7 +50,7 @@ const ImportantLinks = ({ channel }) => {
     setError('');
     try {
       const { data } = await notesAPI.addLink({ ...form, channel });
-      setLinks([data, ...links]);
+      setLinks((prev) => [data, ...prev]);
       setForm({ title: '', url: '' });
       setShowForm(false);
     } catch (err) {
@@ -66,15 +88,21 @@ const ImportantLinks = ({ channel }) => {
         </form>
       )}
       <ul className="important-links-list">
-        {links.map((link, i) => (
-          <li key={i} className="important-link-item">
-            <a href={link.url} target="_blank" rel="noopener noreferrer">{link.title}</a>
-            {link.user && (
-              <span className="important-link-user">by {link.user.username}</span>
-            )}
-          </li>
-        ))}
-        {links.length === 0 && <li className="important-link-item muted">No links yet</li>}
+        {loading ? (
+          <li className="important-link-item muted">Loading links...</li>
+        ) : (
+          <>
+            {links.map((link, i) => (
+              <li key={i} className="important-link-item">
+                <a href={link.url} target="_blank" rel="noopener noreferrer">{link.title}</a>
+                {link.user && (
+                  <span className="important-link-user">by {link.user.username}</span>
+                )}
+              </li>
+            ))}
+            {links.length === 0 && <li className="important-link-item muted">No links yet</li>}
+          </>
+        )}
       </ul>
     </div>
   );
