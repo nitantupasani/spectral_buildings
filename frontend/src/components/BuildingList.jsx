@@ -39,7 +39,7 @@ const BuildingList = () => {
   const statusThemes = {
     active: { bg: 'rgba(54, 201, 130, 0.18)', border: 'rgba(54, 201, 130, 0.5)', text: '#18a46c' },
     onboarding: { bg: 'rgba(92, 130, 255, 0.16)', border: 'rgba(92, 130, 255, 0.5)', text: '#4b61e8' },
-    control: { bg: 'rgba(255, 196, 86, 0.18)', border: 'rgba(255, 196, 86, 0.55)', text: '#c57a00' },
+    control: { bg: 'rgba(54, 201, 130, 0.18)', border: 'rgba(54, 201, 130, 0.5)', text: '#18a46c' },
     'bms data only': { bg: 'rgba(0, 209, 255, 0.16)', border: 'rgba(0, 209, 255, 0.45)', text: '#0086a3' },
     'on-hold': { bg: 'rgba(255, 124, 124, 0.16)', border: 'rgba(255, 124, 124, 0.5)', text: '#c94b4b' },
     'on hold': { bg: 'rgba(255, 124, 124, 0.16)', border: 'rgba(255, 124, 124, 0.5)', text: '#c94b4b' },
@@ -49,14 +49,6 @@ const BuildingList = () => {
   const getStatusTheme = (status) => {
     const normalized = getStatusLabel(status).toLowerCase();
     return statusThemes[normalized] || { bg: 'rgba(76, 142, 255, 0.12)', border: 'rgba(76, 142, 255, 0.35)', text: 'var(--text)' };
-  };
-
-  const formatDisplayDate = (dateValue) => {
-    if (!dateValue) return '—';
-    const parsed = new Date(dateValue);
-    return Number.isNaN(parsed.getTime())
-      ? '—'
-      : parsed.toLocaleDateString(undefined, { dateStyle: 'medium' });
   };
 
   const statusOptions = useMemo(() => {
@@ -211,7 +203,6 @@ const BuildingList = () => {
               {filteredBuildings.map((building) => {
                 const statusLabel = getStatusLabel(building.status);
                 const statusTheme = getStatusTheme(building.status);
-                const updatedDate = formatDisplayDate(building.updatedAt || building.onboardedDate);
 
                 return (
                   <Link
@@ -225,16 +216,6 @@ const BuildingList = () => {
                           <p className="building-card__eyebrow">Building</p>
                           <h3 className="building-card__title">{building.name || building.address || 'Untitled'}</h3>
                         </div>
-                        <span
-                          className="status-chip"
-                          style={{
-                            backgroundColor: statusTheme.bg,
-                            borderColor: statusTheme.border,
-                            color: statusTheme.text
-                          }}
-                        >
-                          {statusLabel}
-                        </span>
                       </div>
 
                       <p className="building-card__address">📍 {building.address || 'Address pending'}</p>
@@ -248,9 +229,15 @@ const BuildingList = () => {
                       )}
 
                       <div className="building-card__footer">
-                        <span className="building-card__tag">Updated {updatedDate}</span>
-                        <span className="building-card__tag building-card__tag--muted">
-                          Onboarded {formatDisplayDate(building.onboardedDate)}
+                        <span
+                          className="status-chip"
+                          style={{
+                            backgroundColor: statusTheme.bg,
+                            borderColor: statusTheme.border,
+                            color: statusTheme.text
+                          }}
+                        >
+                          {statusLabel}
                         </span>
                       </div>
                     </div>
